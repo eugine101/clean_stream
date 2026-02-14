@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: server
+  
+  # Disable JPA/SQL auto-configuration
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/clean-data-db
+  
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+n8n:
+  webhook:
+    url: https://koyo.app.n8n.cloud/webhook/clean-data
+
+server:
+  port: 8080
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.server.server: DEBUG

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1234567890",
+    "city": "New York",
+    "country": "USA"
+  },
+  {
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "phone": "+1987654321",
+    "city": "Los Angeles",
+    "country": "USA"
+  },
+  {
+    "name": "Bob Johnson",
+    "email": "bob.johnson@example.com",
+    "phone": "+44123456789",
+    "city": "London",
+    "country": "UK"
+  },
+  {
+    "name": "Alice Williams",
+    "email": "alice.williams@example.com",
+    "phone": "+33123456789",
+    "city": "Paris",
+    "country": "France"
+  },
+  {
+    "name": "Charlie Brown",
+    "email": "charlie.brown@example.com",
+    "phone": "+49123456789",
+    "city": "Berlin",
+    "country": "Germany"
+  }
+]
