@@ -4,8 +4,9 @@ import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Download, RefreshCw, ChevronLeft, ChevronRight, AlertCircle, ChevronDown, Trash2, FileText, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Search, Download, RefreshCw, ChevronLeft, ChevronRight, AlertCircle, ChevronDown, Trash2, FileText, Clock, CheckCircle, XCircle, Loader2, Eye } from "lucide-react";
 import { useAppState } from "@/context/AppStateContext";
+import { ProcessingDetailsModal } from "@/components/ProcessingDetailsModal";
 import * as api from "@/lib/api";
 
 export default function Page() {
@@ -15,6 +16,8 @@ export default function Page() {
   const [retrying, setRetrying] = useState<string | null>(null);
   const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
   const [openOutputMenu, setOpenOutputMenu] = useState<string | null>(null);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   const { files, loading, error, refresh } = useAppState();
@@ -325,6 +328,20 @@ export default function Page() {
                             )}
                           </div>
                         )}
+                        {(item.status.toUpperCase() === "PROCESSING" || item.status.toUpperCase() === "PAUSED") && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => {
+                              setSelectedFileId(item.fileId);
+                              setSelectedFileName(item.fileName);
+                            }}
+                            title="View processing details and manage pause/resume"
+                            className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          >
+                            <Eye className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          </Button>
+                        )}
                         {item.status.toUpperCase() === "FAILED" && (
                           <Button
                             variant="ghost"
@@ -418,6 +435,19 @@ export default function Page() {
           )}
         </div>
       </div>
+
+      {/* Processing Details Modal */}
+      {selectedFileId && selectedFileName && (
+        <ProcessingDetailsModal
+          fileId={selectedFileId}
+          filename={selectedFileName}
+          isOpen={!!selectedFileId}
+          onClose={() => {
+            setSelectedFileId(null);
+            setSelectedFileName(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -4,4 +4,7 @@ psycopg2-binary
 python-dotenv
 numpy
 requests
-openai
+google-genai
+sqlalchemy>=2.0
+sqlalchemy-utils
+sentence-transformers

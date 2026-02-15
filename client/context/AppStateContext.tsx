@@ -17,6 +17,7 @@ type AppState = {
   files: FileItem[]
   loading: boolean
   error?: string | null
+  tenantId: string
   refresh: () => Promise<void>
   upload: (file: File) => Promise<any>
 }
@@ -27,6 +28,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [files, setFiles] = React.useState<FileItem[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [tenantId] = React.useState<string>("tenant-001")
 
   const refresh = React.useCallback(async () => {
     setLoading(true)
@@ -57,7 +59,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [refresh])
 
   return (
-    <AppStateContext.Provider value={{ files, loading, error, refresh, upload }}>
+    <AppStateContext.Provider value={{ files, loading, error, tenantId, refresh, upload }}>
       {children}
     </AppStateContext.Provider>
   )

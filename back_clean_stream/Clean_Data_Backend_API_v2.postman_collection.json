@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "Clean Stream AI - API Testing",
+    "description": "Postman collection for testing FastAPI AI Engine and Spring Boot Integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "FastAPI AI Engine",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["health"]
+            },
+            "description": "Check if FastAPI service is running"
+          },
+          "response": []
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": [""]
+            },
+            "description": "Get API information and available endpoints"
+          },
+          "response": []
+        },
+        {
+          "name": "Process Single Row",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"row\": {\n    \"name\": \"John Do\",\n    \"email\": \"john.example.com\",\n    \"phone\": \"123-456-789\",\n    \"age\": \"invalid\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["process-row"]
+            },
+            "description": "Process a single data row through AI cleaning engine. Generates embeddings, retrieves RAG context, and generates cleaning suggestions."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Valid Row",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"row\": {\n    \"name\": \"Jane Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"555-123-4567\",\n    \"age\": \"28\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["process-row"]
+            },
+            "description": "Process a valid row with proper data format"
+          },
+          "response": []
+        },
+        {
+          "name": "Process Row - Missing Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-002\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440002\",\n  \"row\": {\n    \"name\": \"Bob Johnson\",\n    \"email\": \"\",\n    \"phone\": \"555-987-6543\",\n    \"age\": \"45\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["process-row"]
+            },
+            "description": "Test with missing email field"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Spring Boot AI Cleaning API",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "health"]
+            },
+            "description": "Check if Spring Boot AI service and FastAPI integration is healthy"
+          },
+          "response": []
+        },
+        {
+          "name": "Service Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/info",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "info"]
+            },
+            "description": "Get FastAPI service information"
+          },
+          "response": []
+        },
+        {
+          "name": "Process Single Row",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"row\": {\n    \"firstName\": \"John\",\n    \"lastName\": \"Do\",\n    \"email\": \"john@example\",\n    \"phone\": \"123 456 789\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-row"]
+            },
+            "description": "Process a single row through Spring Boot (which calls FastAPI)"
+          },
+          "response": []
+        },
+        {
+          "name": "Process Batch Rows",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"rows\": [\n    {\n      \"name\": \"John Do\",\n      \"email\": \"john.example.com\",\n      \"age\": \"invalid\"\n    },\n    {\n      \"name\": \"Jane Smith\",\n      \"email\": \"jane.smith@example.com\",\n      \"age\": \"28\"\n    },\n    {\n      \"name\": \"Bob Johnson\",\n      \"email\": \"bob@example.com\",\n      \"age\": \"\"\n    },\n    {\n      \"name\": \"Alice Brown\",\n      \"email\": \"alice@example.com\",\n      \"age\": \"35\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-batch",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-batch"]
+            },
+            "description": "Process multiple rows in a batch. Each row is processed individually and returns results for all"
+          },
+          "response": []
+        },
+        {
+          "name": "Process Valid Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-002\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"rows\": [\n    {\n      \"name\": \"Alice Wonder\",\n      \"email\": \"alice.wonder@example.com\",\n      \"phone\": \"555-111-2222\",\n      \"age\": \"30\"\n    },\n    {\n      \"name\": \"Charlie Brown\",\n      \"email\": \"charlie.brown@example.com\",\n      \"phone\": \"555-333-4444\",\n      \"age\": \"42\"\n    },\n    {\n      \"name\": \"Diana Prince\",\n      \"email\": \"diana.prince@example.com\",\n      \"phone\": \"555-555-6666\",\n      \"age\": \"38\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-batch",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-batch"]
+            },
+            "description": "Process a batch of valid rows"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "File Processing (CSV/JSON)",
+      "item": [
+        {
+          "name": "Upload and Process File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/sample_data.csv"
+                },
+                {
+                  "key": "tenantId",
+                  "value": "tenant-001",
+                  "type": "text"
+                },
+                {
+                  "key": "datasetId",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/process-file/upload-and-process",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "process-file", "upload-and-process"]
+            },
+            "description": "Upload a CSV or JSON file, parse it, and process each row through FastAPI AI Engine. Returns complete results for all rows."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Rows from Request Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"fileType\": \"JSON\",\n  \"rows\": [\n    {\n      \"name\": \"John Do\",\n      \"email\": \"john.example.com\",\n      \"age\": \"invalid\"\n    },\n    {\n      \"name\": \"Jane Smith\",\n      \"email\": \"jane.smith@example.com\",\n      \"age\": \"28\"\n    },\n    {\n      \"name\": \"Bob Johnson\",\n      \"email\": \"bob@example.com\",\n      \"age\": \"\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/process-file/process-rows",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "process-file", "process-rows"]
+            },
+            "description": "Process multiple rows directly from request body (no file upload needed). Useful for testing without file upload."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Test Cases",
+      "item": [
+        {
+          "name": "Invalid Tenant ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"row\": {\n    \"name\": \"Test\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-row"]
+            },
+            "description": "Test error handling with empty tenantId"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Dataset ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"invalid-uuid\",\n  \"row\": {\n    \"name\": \"Test\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-row"]
+            },
+            "description": "Test error handling with invalid UUID format"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing Row Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"tenant-001\",\n  \"datasetId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"row\": {}\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/ai-cleaning/process-row",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "ai-cleaning", "process-row"]
+            },
+            "description": "Test error handling with empty row data"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_fastapi",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "base_url_spring",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "tenant-001",
+      "type": "string"
+    },
+    {
+      "key": "dataset_id",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string"
+    }
+  ]
+}
