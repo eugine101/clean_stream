@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,6 +81,54 @@ public class FastAPIService {
         }
     }
 
+    /**
+     * Process an entire dataset asynchronously through FastAPI AI Engine.
+     * FastAPI will process rows in background and stream results back via callbacks.
+     *
+     * @param tenantId the tenant identifier for multi-tenant isolation
+     * @param datasetId the UUID of the dataset
+     * @param rows list of data rows to process
+     * @return response indicating processing has started
+     */
+    public Map<String, Object> processDataset(String tenantId, String datasetId, List<Map<String, Object>> rows) {
+        try {
+            log.info("Sending dataset to FastAPI for processing - tenant: {}, dataset: {}, rows: {}",
+                tenantId, datasetId, rows.size());
+
+            // Build request payload
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("tenantId", tenantId);
+            payload.put("datasetId", datasetId);
+            payload.put("rows", rows);
+            payload.put("callbackUrl", "http://localhost:8080/api/dataset-processing");
+
+            // Create HTTP headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Send POST request to FastAPI /process-dataset endpoint
+            String url = fastApiBaseUrl + "/process-dataset";
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            log.debug("Calling FastAPI endpoint: {}", url);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.error("FastAPI returned error status: {}", response.getStatusCode());
+                throw new RuntimeException("FastAPI dataset processing failed: " + response.getStatusCode());
+            }
+
+            // Parse response
+            JsonNode responseNode = objectMapper.readTree(response.getBody());
+            log.info("Dataset processing initiated successfully");
+
+            return objectMapper.convertValue(responseNode, Map.class);
+
+        } catch (Exception e) {
+            log.error("Error starting dataset processing via FastAPI: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to start dataset processing: " + e.getMessage(), e);
+        }
+    }
     /**
      * Check health status of FastAPI service
      *

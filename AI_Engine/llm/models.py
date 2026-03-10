@@ -44,3 +44,25 @@ class CleaningResult(Base):
     __table_args__ = (
         Index("idx_cleaning_results_tenant_dataset", "tenant_id", "dataset_id"),
     )
+
+
+# ------------------------------
+# Dataset Progress Tracking Table
+# ------------------------------
+class DatasetProgress(Base):
+    __tablename__ = "dataset_progress"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tenant_id = Column(String(255), nullable=False)
+    dataset_id = Column(UUIDType(binary=False), nullable=False, unique=True)
+    total_rows = Column(Integer, nullable=False)
+    processed_rows = Column(Integer, default=0)
+    failed_rows = Column(Integer, default=0)
+    status = Column(String(50), default="processing")  # 'processing', 'completed', 'failed', 'paused'
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index("idx_dataset_progress_tenant", "tenant_id"),
+        Index("idx_dataset_progress_dataset", "dataset_id"),
+    )

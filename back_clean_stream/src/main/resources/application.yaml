@@ -2,15 +2,25 @@ spring:
   application:
     name: server
   
-  # Disable JPA/SQL auto-configuration and MongoDB
-  autoconfigure:
-    exclude: 
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.mongodb.MongoDataAutoConfiguration
-      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/clean_stream
+    username: postgres
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+    
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/clean_stream}
   
   servlet:
     multipart:
@@ -33,3 +43,4 @@ logging:
   level:
     root: INFO
     com.server.server: DEBUG
+    org.hibernate.SQL: DEBUG

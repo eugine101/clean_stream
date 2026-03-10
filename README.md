@@ -16,29 +16,162 @@ This document outlines the implementation of a three-tier architecture for AI-po
 
 ## 🏗️ Architecture
 
-### 1. **Workflow: Dataset Upload → Row Processing → AI Cleaning**
+### 1. **Complete End-to-End Workflow**
 
 ```
-User Upload (Next.js)
+FRONTEND (Next.js)
         ↓
-Spring Boot Stores File
+        1. User uploads CSV/XLSX file
+        2. File sent to Spring Boot POST /api/files/upload
+        3. Establish WebSocket connection (ws://localhost:8080/ws/dataset/{datasetId})
         ↓
-Spring Boot Reads Rows
+BACKEND (Spring Boot)
         ↓
-FastAPI /process-row (for each row)
-        ├─ Generate Embedding
-        ├─ Retrieve Similar Context (RAG)
-        ├─ Call LLM with Context
-        └─ Store Results in DB
+        4. Validate file & extract rows
+        5. Store file metadata in MongoDB
+        6. Trigger batch processing via POST /api/process-dataset
         ↓
-Spring Boot Returns Cleaning Suggestions
+        7. For each row in dataset:
+           a. Send HTTP POST to FastAPI /process-row
+           b. Wait for cleaning suggestions
+           c. Store result in PostgreSQL
+           d. Broadcast via WebSocket to all connected clients
         ↓
-Next.js Displays Results
+AI ENGINE (FastAPI)
+        ↓
+        8. Receive row data
+        9. Generate embedding (Sentence-Transformers)
+        10. Retrieve similar examples via RAG (cosine similarity)
+        11. Call LLM with context to generate cleaning suggestions
+        12. Store embedding in tenant_embeddings table
+        13. Return cleaned row + suggestions to Spring Boot
+        ↓
+BACKEND BROADCASTS
+        ↓
+        14. WebSocket message types:
+            - "row": Cleaned row received (index, cleanedRow, confidence)
+            - "progress": Processing update (processed, total, failed, percentage)
+            - "completed": All rows processed (final stats)
+            - "error": Processing failed (error message)
+        ↓
+FRONTEND RECEIVES
+        ↓
+        15. useDatasetWebSocket hook receives messages
+        16. Update state with:
+            - Table with cleaned rows
+            - Progress bar / percentage
+            - Real-time statistics
+            - Error notifications
+        ↓
+FINAL STATE
+        ↓
+        17. User can download cleaned dataset or review suggestions
 ```
 
 ---
 
-## 🚀 FastAPI Setup
+## � Real-Time WebSocket Communication
+
+### Frontend → Backend
+- **Endpoint**: `ws://localhost:8080/ws/dataset/{datasetId}`
+- **Authentication**: JWT token in URL or headers
+- **Connection Flow**:
+  1. Next.js establishes WebSocket connection after file upload
+  2. Sends keep-alive ping every 30 seconds
+  3. Listens for incoming messages
+
+### Backend → Frontend Messages
+
+#### 1. Connection Established
+```json
+{
+  "type": "connected",
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Connected to dataset stream"
+}
+```
+
+#### 2. Row Processed
+```json
+{
+  "type": "row",
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "rowIndex": 0,
+  "cleanedRow": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 25
+  },
+  "confidence": 0.95,
+  "timestamp": 1708854000000
+}
+```
+
+#### 3. Processing Progress
+```json
+{
+  "type": "progress",
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "processedRows": 50,
+  "totalRows": 1000,
+  "failedRows": 2,
+  "progress": 5,
+  "timestamp": 1708854000000
+}
+```
+
+#### 4. Processing Completed
+```json
+{
+  "type": "completed",
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Processing complete",
+  "processedRows": 1000,
+  "totalRows": 1000,
+  "failedRows": 2,
+  "timestamp": 1708854000000
+}
+```
+
+#### 5. Error Occurred
+```json
+{
+  "type": "error",
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "error": "Failed to process row 15: Invalid email format",
+  "timestamp": 1708854000000
+}
+```
+
+### Frontend Implementation
+```typescript
+// useDatasetWebSocket hook usage
+const { isConnected, stats, rows, errors } = useDatasetWebSocket({
+  datasetId: "550e8400-e29b-41d4-a716-446655440000",
+  tenantId: "tenant-123",
+  onRowReceived: (row) => {
+    // Update table with cleaned row
+    setRows(prev => [...prev, row]);
+  },
+  onProgressUpdate: (progress, processed, total, failed) => {
+    // Update progress bar
+    setProgress(progress);
+    setStats({ processed, total, failed });
+  },
+  onCompleted: (stats) => {
+    // Show completion message
+    showNotification("Processing complete!");
+  },
+  onError: (error) => {
+    // Show error notification
+    showErrorNotification(error);
+  }
+});
+```
+
+---
+
+## �🚀 FastAPI Setup
 
 ### Key Features
 - **Online LLM**: Uses HuggingFace Inference API (no local model download after initial setup)
@@ -108,19 +241,85 @@ GET /
 
 ## 🔌 Spring Boot Integration
 
-### New Services & Controllers
+### File Upload & Processing
 
-#### 1. **FastAPIService** (`src/main/java/.../service/FastAPIService.java`)
-- Handles HTTP requests to FastAPI
-- Processes single rows
-- Health checks
-- Configurable base URL
+#### 1. **Upload Endpoint** 
+```http
+POST /api/files/upload
+Content-Type: multipart/form-data
 
-```java
-fastAPIService.processRow(tenantId, datasetId, rowData);
+file: <CSV or XLSX file>
+datasetId: "550e8400-e29b-41d4-a716-446655440000"
+tenantId: "tenant-123"
 ```
 
-#### 2. **AICleaningController** (`src/main/java/.../controller/AICleaningController.java`)
+**Response:**
+```json
+{
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "fileName": "customers.csv",
+  "rowCount": 1000,
+  "status": "uploaded"
+}
+```
+
+#### 2. **Process Dataset Endpoint**
+```http
+POST /api/process-dataset
+Content-Type: application/json
+
+{
+  "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+  "tenantId": "tenant-123"
+}
+```
+
+**Flow:**
+1. Spring Boot reads rows from MongoDB
+2. For each row, calls FastAPI POST /process-row
+3. Receives cleaned row + suggestions
+4. Broadcasts result via WebSocket to all connected clients
+5. Returns final statistics
+
+#### 3. **WebSocket Endpoint**
+```
+ws://localhost:8080/ws/dataset/{datasetId}?token={jwtToken}
+```
+
+**Connection Lifecycle:**
+- Client connects → receive "connected" message
+- Client receives "row" messages as they're processed
+- Client receives periodic "progress" messages
+- Client receives "completed" message when done
+- Client receives "error" messages if failures occur
+
+### Services & Controllers
+
+#### 1. **WebSocketBroadcastService**
+- Broadcasts cleaned rows to all dataset subscribers
+- Sends progress updates
+- Notifies on processing completion
+- Sends error messages
+- Methods:
+  - `broadcastCleanedRow(datasetId, rowIndex, cleanedRow, confidence)`
+  - `broadcastProgress(datasetId, processedRows, totalRows, failedRows)`
+  - `broadcastCompleted(datasetId, stats)`
+  - `broadcastError(datasetId, error)`
+
+#### 2. **FastAPIService**
+- Handles HTTP requests to FastAPI
+- `processRow(tenantId, datasetId, rowData)` - Process single row
+- Health checks
+- Error handling & retries
+- Configurable base URL from `application.yaml`
+
+#### 3. **DatasetController**
+- **POST /api/files/upload** - Upload file
+- **POST /api/process-dataset** - Start batch processing
+- **GET /api/datasets/{datasetId}** - Get dataset info
+- **GET /api/datasets/{datasetId}/results** - Get all results for dataset
+
+#### 4. **AICleaningController**
 - **POST /api/ai-cleaning/process-row** - Process single row
 - **POST /api/ai-cleaning/process-batch** - Process multiple rows
 - **GET /api/ai-cleaning/health** - Health status
@@ -128,15 +327,38 @@ fastAPIService.processRow(tenantId, datasetId, rowData);
 
 ### Configuration
 
-**`application.yaml`**:
+**`application.yaml`** (Spring Boot):
 ```yaml
 fastapi:
   base-url: http://localhost:8000
+
+websocket:
+  max-idle-time: 3600000
+  allowed-origins: http://localhost:3000
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/clean_stream
+  datasource:
+    url: jdbc:postgresql://localhost:5432/clean_stream
+    username: postgres
+    password: your_password
 ```
 
 ---
 
-## 🛠️ Implementation Steps
+## 🛠️ Full Stack Setup & Running
+
+### Prerequisites
+- **Node.js 18+** (for Next.js frontend)
+- **Java 21+** (for Spring Boot)
+- **Python 3.11+** (for FastAPI)
+- **PostgreSQL 14+** (for embeddings & results)
+- **MongoDB 6+** (for file storage)
+- **HuggingFace API Key** (for LLM calls)
+
+### Implementation Steps
 
 ### Step 1: Setup FastAPI Environment
 
@@ -163,9 +385,9 @@ DB_NAME=clean_stream
 DB_USER=postgres
 DB_PASSWORD=your_password
 
-HF_MODEL_NAME=TinyLlama/TinyLlama-1.1B-Chat-v1.0
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-1.5-flash
 HF_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
-HF_KEY=your_huggingface_token
 ```
 
 ### Step 3: Start FastAPI Server
@@ -175,25 +397,115 @@ cd AI_Engine/llm
 uvicorn main:app --reload --port 8000
 ```
 
-### Step 4: Update Spring Boot Configuration
-
-Ensure `application.yaml` has:
-```yaml
-fastapi:
-  base-url: http://localhost:8000
+Output should show:
+```
+Uvicorn running on http://127.0.0.1:8000
+Application startup complete
 ```
 
-### Step 5: Test Integration
+### Step 4: Setup & Run Spring Boot Backend
 
-**From Spring Boot**:
 ```bash
-curl -X POST http://localhost:8080/api/ai-cleaning/process-row \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tenantId": "tenant-1",
-    "datasetId": "550e8400-e29b-41d4-a716-446655440000",
-    "row": {"name": "John", "email": "invalid"}
-  }'
+cd back_clean_stream
+
+# Build
+mvn clean install
+
+# Run (from IDE or command line)
+mvn spring-boot:run
+```
+
+Default runs on: `http://localhost:8080`
+
+### Step 5: Setup & Run Next.js Frontend
+
+```bash
+cd client
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Default runs on: `http://localhost:3000`
+
+### Step 6: Verify All Services Running
+
+```bash
+# FastAPI health
+curl http://localhost:8000/health
+
+# Spring Boot health
+curl http://localhost:8080/actuator/health
+
+# Frontend (open in browser)
+http://localhost:3000
+```
+
+### Step 7: Test Full Data Cleaning Flow
+
+1. **Open Frontend**: Go to `http://localhost:3000/dashboard/upload`
+2. **Upload File**: Select a CSV or XLSX file
+3. **Watch Progress**: Real-time updates via WebSocket
+4. **Review Results**: See cleaned rows and statistics
+5. **Download**: Export the cleaned dataset
+
+---
+
+## 📱 Frontend Components
+
+### 1. **FileUploadWithProgress Component**
+- Drag-and-drop file upload
+- Progress bar for file transfer
+- File validation (CSV, XLSX)
+- Error handling
+
+### 2. **RealtimeProcessingDisplay Component**
+- Shows live progress percentage
+- Displays processed/total/failed row counts
+- Updates in real-time via WebSocket
+- Shows processing speed (rows/sec)
+
+### 3. **ProcessedRowsTable Component**
+- Displays all cleaned rows
+- Shows confidence scores
+- Sortable columns
+- Pagination support
+
+### 4. **ProcessingDetailsModal Component**
+- Shows detailed cleaning suggestions
+- Original vs cleaned values
+- Confidence scores
+- AI reasoning
+
+### Example Frontend Flow
+```typescript
+// 1. User uploads file
+const handleFileUpload = (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('datasetId', generateUUID());
+  await api.post('/api/files/upload', formData);
+  //  datasetId stored in context
+};
+
+// 2. Frontend connects to WebSocket
+const { isConnected, stats } = useDatasetWebSocket({
+  datasetId,
+  onRowReceived: (row) => setRows(prev => [...prev, row]),
+  onProgressUpdate: (pct, processed, total, failed) => 
+    setStats({ percentage: pct, processed, total, failed })
+});
+
+// 3. Real-time UI updates
+return (
+  <>
+    <RealtimeProcessingDisplay stats={stats} />
+    <ProcessedRowsTable rows={rows} />
+  </>
+);
 ```
 
 ---
@@ -353,38 +665,55 @@ for (Map<String, Object> row : rows) {
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing the Complete Flow
 
-### Test FastAPI Directly
+### 1. Test FastAPI Directly (Optional)
 ```bash
+# Health check
+curl http://localhost:8000/health
+
+# Process a single row
 curl -X POST http://localhost:8000/process-row \
   -H "Content-Type: application/json" \
   -d '{
     "tenantId": "test-tenant",
     "datasetId": "550e8400-e29b-41d4-a716-446655440000",
-    "row": {"name": "Test User", "email": "test@example.com"}
+    "row": {"name": "John Do", "email": "john.example", "age": "invalid"}
   }'
 ```
 
-### Test Spring Boot Integration
+### 2. Test Spring Boot File Upload Endpoint
 ```bash
-curl -X POST http://localhost:8080/api/ai-cleaning/process-row \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tenantId": "test-tenant",
-    "datasetId": "550e8400-e29b-41d4-a716-446655440000",
-    "row": {"name": "Test User", "email": "invalid"}
-  }'
+# Upload a CSV file
+curl -X POST http://localhost:8080/api/files/upload \
+  -F "file=@customers.csv" \
+  -F "datasetId=550e8400-e29b-41d4-a716-446655440000" \
+  -F "tenantId=tenant-123"
 ```
 
-### Test Health
-```bash
-# FastAPI
-curl http://localhost:8000/health
+### 3. Test Real-Time Processing via Frontend
 
-# Spring Boot
-curl http://localhost:8080/api/ai-cleaning/health
+**Manual WebSocket Test** (using websocat or similar):
+```bash
+# Connect to WebSocket
+websocat "ws://localhost:8080/ws/dataset/550e8400-e29b-41d4-a716-446655440000"
+
+# You should receive messages like:
+# {"type":"connected","datasetId":"550e8400-e29b-41d4-a716-446655440000"}
+# {"type":"row","rowIndex":0,"cleanedRow":{...},"confidence":0.95}
+# {"type":"progress","processedRows":10,"totalRows":100,"progress":10}
 ```
+
+### 4. End-to-End UI Test
+1. Open `http://localhost:3000/dashboard/upload`
+2. Click "Upload File" or drag-and-drop a CSV
+3. Watch the:
+   - File upload progress
+   - Real-time row processing
+   - Live statistics update
+   - Final completion message
+4. Click on a row to see detailed cleaning suggestions
+5. Download cleaned dataset
 
 ---
 
@@ -419,17 +748,21 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ---
 
-## 🎯 Next Steps
+## 🎯 Next Steps & Improvements
 
-1. ✅ Implement FastAPI backend (DONE)
-2. ✅ Add Spring Boot integration service (DONE)
-3. ✅ Create AI cleaning controller (DONE)
-4. ⬜ Implement Next.js frontend (UI)
-5. ⬜ Add batch processing optimization
-6. ⬜ Implement caching for frequent rows
-7. ⬜ Add WebSocket for real-time updates
-8. ⬜ Deploy to production
+1. ✅ FastAPI backend with RAG + LLM (DONE)
+2. ✅ Spring Boot integration service (DONE)
+3. ✅ WebSocket real-time broadcasting (DONE)
+4. ✅ Next.js frontend with live updates (DONE)
+5. ⬜ Add export cleaned dataset to CSV/XLSX
+6. ⬜ Add confidence threshold filtering
+7. ⬜ Implement caching for frequently processed rows
+8. ⬜ Add batch retry for failed rows
+9. ⬜ Implement rate limiting on FastAPI
+10. ⬜ Add audit logging for all cleaning operations
+11. ⬜ Deploy with Docker Compose
+12. ⬜ Setup monitoring & alerting (Prometheus/Grafana)
 
 ---
 
-**Last Updated**: February 14, 2026
+**Last Updated**: February 24, 2026

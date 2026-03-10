@@ -1,10 +1,13 @@
 fastapi
-uvicorn
+uvicorn[standard]
 psycopg2-binary
 python-dotenv
 numpy
-requests
+httpx
 google-genai
 sqlalchemy>=2.0
 sqlalchemy-utils
 sentence-transformers
+aiofiles
+asyncpg
+tenacity
