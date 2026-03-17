@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/clean_stream
     username: postgres
-    password: ${DB_PASSWORD:password}
+    password: 90eugine
     driver-class-name: org.postgresql.Driver
   
   jpa:

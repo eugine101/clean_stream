@@ -31,8 +31,8 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+            Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
                 .parseClaimsJws(token);
             return true;
@@ -57,8 +57,8 @@ public class JwtTokenProvider {
      */
     public String getTenantIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+            Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -83,8 +83,8 @@ public class JwtTokenProvider {
      */
     public String getUserIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+            Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -108,8 +108,8 @@ public class JwtTokenProvider {
      */
     public boolean isTokenExpired(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+            Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

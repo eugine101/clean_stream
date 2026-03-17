@@ -59,7 +59,7 @@ class WebSocketBroadcastServiceTest {
         assertThat(capturedMessage.getType()).isEqualTo("row");
         assertThat(capturedMessage.getDatasetId()).isEqualTo(datasetId);
         assertThat(capturedMessage.getRowIndex()).isEqualTo(rowIndex);
-        assertThat(capturedMessage.getData()).isEqualTo(cleanedRow);
+        assertThat(capturedMessage.getCleanedRow()).isEqualTo(cleanedRow);
         assertThat(capturedMessage.getConfidence()).isEqualTo(confidence);
         assertThat(capturedMessage.getTimestamp()).isNotNull();
     }
@@ -218,7 +218,7 @@ class WebSocketBroadcastServiceTest {
         ArgumentCaptor<WebSocketMessage> messageCaptor = ArgumentCaptor.forClass(WebSocketMessage.class);
 
         // Act
-        service.broadcastCompleted(datasetId, 100, 0, 100);
+        service.broadcastCompletion(datasetId, 100, 0, 100);
 
         // Assert
         verify(webSocketHandler).broadcastToDataset(eq(datasetId), messageCaptor.capture());
@@ -245,8 +245,8 @@ class WebSocketBroadcastServiceTest {
         // Assert
         verify(webSocketHandler).broadcastToDataset(eq(datasetId), messageCaptor.capture());
         WebSocketMessage message = messageCaptor.getValue();
-        assertThat(message.getData()).isNotNull();
-        assertThat(message.getData()).isEmpty();
+        assertThat(message.getCleanedRow()).isNotNull();
+        assertThat(message.getCleanedRow()).isEmpty();
     }
 
     @Test

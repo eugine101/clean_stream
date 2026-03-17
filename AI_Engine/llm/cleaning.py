@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def process_row(tenant_id: str, dataset_id: UUID, row: Dict[str, Any]) -> Dict[str, Any]:
+async def process_row(tenant_id: str, dataset_id: UUID, row: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a data row:
     1. Generate embedding for the row

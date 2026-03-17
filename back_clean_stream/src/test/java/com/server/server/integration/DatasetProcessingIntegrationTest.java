@@ -152,8 +152,7 @@ class DatasetProcessingIntegrationTest {
         // Act - Simulate progress updates
         webSocketBroadcastService.broadcastProgress(datasetId, 25, 100, 0);
         webSocketBroadcastService.broadcastProgress(datasetId, 50, 100, 1);
-        webSocketBroadcastService.broadcastProgress(datasetId, 75, 100, 2);
-        webSocketBroadcastService.broadcastCompleted(datasetId, 75, 2, 100);
+        webSocketBroadcastService.broadcastCompletion(datasetId, 75, 2, 100);
 
         // Assert
         verify(webSocketHandler, times(4)).broadcastToDataset(eq(datasetId), any());

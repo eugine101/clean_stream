@@ -12,25 +12,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class WebSocketMessage {
-    private String type;
-    private String datasetId;
-    private Object data;
-    private String message;
-    
-    public WebSocketMessage(String type, String datasetId, Object data, String message) {
-        this.type = type;
-        this.datasetId = datasetId;
-        this.data = data;
-        this.message = message;
-    }
-    
-    public String getType() { return type; }
-    public String getDatasetId() { return datasetId; }
-    public Object getData() { return data; }
-    public String getMessage() { return message; }
-}
-
 @Slf4j
 @Component
 public class DatasetWebSocketHandler extends TextWebSocketHandler {
@@ -64,12 +45,12 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
         if (token != null) {
             if (!jwtTokenProvider.validateToken(token)) {
                 log.warn("Invalid JWT token provided for WebSocket connection - sessionId: {}", sessionId);
-                sendMessage(session, new WebSocketMessage(
-                    "error",
-                    datasetId,
-                    null,
-                    "Invalid or expired JWT token"
-                ));
+                sendMessage(session, WebSocketMessage.builder()
+                    .type("error")
+                    .datasetId(datasetId)
+                    .message("Invalid or expired JWT token")
+                    .timestamp(System.currentTimeMillis())
+                    .build());
                 session.close(CloseStatus.POLICY_VIOLATION);
                 return;
             }
@@ -77,12 +58,12 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
             tenantId = jwtTokenProvider.getTenantIdFromToken(token);
             if (tenantId == null) {
                 log.warn("No tenantId found in JWT token - sessionId: {}", sessionId);
-                sendMessage(session, new WebSocketMessage(
-                    "error",
-                    datasetId,
-                    null,
-                    "No tenant ID found in JWT token"
-                ));
+                sendMessage(session, WebSocketMessage.builder()
+                    .type("error")
+                    .datasetId(datasetId)
+                    .message("No tenant ID found in JWT token")
+                    .timestamp(System.currentTimeMillis())
+                    .build());
                 session.close(CloseStatus.POLICY_VIOLATION);
                 return;
             }
@@ -99,12 +80,12 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
             .add(session);
         
         // Send connection confirmation
-        sendMessage(session, new WebSocketMessage(
-            "connected",
-            datasetId,
-            null,
-            "WebSocket connection established for dataset: " + datasetId
-        ));
+        sendMessage(session, WebSocketMessage.builder()
+            .type("connected")
+            .datasetId(datasetId)
+            .message("WebSocket connection established for dataset: " + datasetId)
+            .timestamp(System.currentTimeMillis())
+            .build());
     }
     
     @Override
@@ -121,22 +102,21 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
             
             // Handle different message types (e.g., ping, status request)
             if ("ping".equals(incomingMsg.getType())) {
-                sendMessage(session, new WebSocketMessage(
-                    "pong",
-                    incomingMsg.getDatasetId(),
-                    null,
-                    "pong"
-                ));
+                sendMessage(session, WebSocketMessage.builder()
+                    .type("pong")
+                    .datasetId(incomingMsg.getDatasetId())
+                    .message("pong")
+                    .timestamp(System.currentTimeMillis())
+                    .build());
             }
             
         } catch (Exception e) {
             log.error("Error processing WebSocket message: {}", e.getMessage());
-            sendMessage(session, new WebSocketMessage(
-                "error",
-                null,
-                null,
-                "Error processing message: " + e.getMessage()
-            ));
+            sendMessage(session, WebSocketMessage.builder()
+                .type("error")
+                .message("Error processing message: " + e.getMessage())
+                .timestamp(System.currentTimeMillis())
+                .build());
         }
     }
     

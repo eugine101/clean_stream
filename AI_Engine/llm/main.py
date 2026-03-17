@@ -55,7 +55,7 @@ async def shutdown_event():
     await close_http_client()
 
 @app.post("/process-row")
-def process_row_endpoint(payload: RowPayload):
+async def process_row_endpoint(payload: RowPayload):
     """
     Process a single data row for cleaning suggestions (SYNCHRONOUS).
     Kept for backward compatibility with existing integrations.
@@ -92,7 +92,7 @@ def process_row_endpoint(payload: RowPayload):
     try:
         logger.info(f"Processing row for tenant: {payload.tenantId}, dataset: {payload.datasetId}")
         dataset_id = UUID(payload.datasetId)
-        result = process_row(payload.tenantId, dataset_id, payload.row)
+        result = await process_row_async(payload.tenantId, dataset_id, payload.row)
         return {
             "tenantId": payload.tenantId,
             "datasetId": payload.datasetId,
@@ -150,6 +150,78 @@ async def process_row_async_endpoint(payload: RowPayload):
         logger.error(f"Error processing row async: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error processing row: {str(e)}")
 
+@app.post("/process-rows")
+async def process_rows_endpoint(payload: DatasetPayload):
+    """
+    Process multiple data rows asynchronously (bulk processing).
+    Lightweight alternative to /process-dataset without callback overhead.
+    
+    Processes rows in parallel and returns all results at once.
+    For streaming results or background processing, use /process-dataset instead.
+    
+    Args:
+        tenantId: Tenant identifier for multi-tenant isolation
+        datasetId: UUID of the dataset
+        rows: List of dictionaries containing data rows to process
+        callbackUrl: Optional (ignored for this endpoint)
+    
+    Returns:
+        {
+          "tenantId": str,
+          "datasetId": str,
+          "status": "completed",
+          "total_rows": int,
+          "processed_rows": int,
+          "results": [
+            {
+              "row_index": int,
+              "status": str,
+              "suggestion": {...},
+              "error": str (if processing failed)
+            },
+            ...
+          ]
+        }
+    """
+    try:
+        logger.info(f"Processing {len(payload.rows)} rows for tenant: {payload.tenantId}, dataset: {payload.datasetId}")
+        dataset_id = UUID(payload.datasetId)
+        
+        # Process all rows concurrently
+        results = []
+        for idx, row in enumerate(payload.rows):
+            try:
+                result = await process_row_async(payload.tenantId, dataset_id, row)
+                results.append({
+                    "row_index": idx,
+                    "status": "success",
+                    "suggestion": result
+                })
+            except Exception as e:
+                logger.error(f"Error processing row {idx}: {str(e)}")
+                results.append({
+                    "row_index": idx,
+                    "status": "error",
+                    "error": str(e)
+                })
+        
+        processed_count = sum(1 for r in results if r["status"] == "success")
+        
+        return {
+            "tenantId": payload.tenantId,
+            "datasetId": payload.datasetId,
+            "status": "completed",
+            "total_rows": len(payload.rows),
+            "processed_rows": processed_count,
+            "results": results
+        }
+    except ValueError as e:
+        logger.error(f"Invalid dataset ID format: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid dataset ID format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error processing rows: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing rows: {str(e)}")
+
 @app.get("/health")
 async def health_check():
     """
@@ -170,6 +242,7 @@ async def root():
         "endpoints": {
             "POST /process-row": "Process a single row (sync, backward compatible)",
             "POST /process-row-async": "Process a single row (async, non-blocking)",
+            "POST /process-rows": "Process multiple rows (async, bulk processing)",
             "POST /process-dataset": "Process entire dataset with background tasks and streaming",
             "GET /health": "Health check with version info",
             "GET /docs": "Interactive API documentation (Swagger UI)",
