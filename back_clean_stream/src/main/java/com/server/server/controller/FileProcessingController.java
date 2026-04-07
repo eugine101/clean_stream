@@ -6,6 +6,7 @@ import com.server.server.service.FileProcessingJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,13 +35,25 @@ public class FileProcessingController {
     }
 
     /**
+     * Extract tenant ID from authentication principal (format: userId|tenantId)
+     */
+    private String getTenantIdFromAuth(Authentication auth) {
+        if (auth == null) return null;
+        String principal = (String) auth.getPrincipal();
+        if (principal != null && principal.contains("|")) {
+            return principal.split("\\|")[1];
+        }
+        return null;
+    }
+
+    /**
      * Upload and process a file (CSV or JSON) with AI cleaning.
      * This endpoint returns immediately with a job ID.
      * Processing happens in the background asynchronously.
      *
      * Request: Multipart file upload with required parameters
      * - file: The CSV or JSON file to process
-     * - tenantId: Tenant identifier for multi-tenant isolation
+     * - tenantId: Tenant identifier for multi-tenant isolation (optional if authenticated)
      * - datasetId: UUID of the dataset
      *
      * Response:
@@ -54,17 +67,24 @@ public class FileProcessingController {
     public ResponseEntity<?> uploadAndProcessFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "tenantId", required = false) String tenantId,
-            @RequestParam(value = "datasetId", required = false) String datasetId) {
+            @RequestParam(value = "datasetId", required = false) String datasetId,
+            Authentication auth) {
         try {
-            // Use defaults if not provided
+            // Try to get tenantId from request parameter first, then from JWT
+            if (tenantId == null || tenantId.isEmpty()) {
+                tenantId = getTenantIdFromAuth(auth);
+            }
+            // Fallback to default if still not available
             if (tenantId == null || tenantId.isEmpty()) {
                 tenantId = "default-tenant";
+                log.warn("No tenantId provided and authentication not available, using default tenant");
             }
+            
             // Always generate a fresh UUID for datasetId (ignore frontend value)
             datasetId = UUID.randomUUID().toString();
 
-            log.info("Received file upload request: filename={}, tenantId={}, datasetId={}, size={}", 
-                file.getOriginalFilename(), tenantId, datasetId, file.getSize());
+            log.info("Received file upload request: filename={}, tenantId={}, datasetId={}, size={}, authenticated={}", 
+                file.getOriginalFilename(), tenantId, datasetId, file.getSize(), auth != null && auth.isAuthenticated());
 
             // Validate file
             if (file == null || file.isEmpty()) {
@@ -92,7 +112,7 @@ public class FileProcessingController {
             }
 
             // Create job and return immediately
-            String jobId = jobService.createJob(filename, rows.size());
+            String jobId = jobService.createJob(filename, rows.size(), tenantId);
             
             // Process file asynchronously in background
             processFileAsync(jobId, tenantId, datasetId, rows);
@@ -135,12 +155,21 @@ public class FileProcessingController {
      * }
      */
     @GetMapping("/status/{jobId}")
-    public ResponseEntity<?> getJobStatus(@PathVariable String jobId) {
+    public ResponseEntity<?> getJobStatus(@PathVariable String jobId, Authentication auth) {
         try {
             FileProcessingJobService.FileProcessingJob job = jobService.getJob(jobId);
             
             if (job == null) {
                 return ResponseEntity.notFound().build();
+            }
+
+            // Verify tenant access
+            String authTenantId = getTenantIdFromAuth(auth);
+            if (authTenantId != null && !authTenantId.equals(job.getTenantId())) {
+                log.warn("Unauthorized access attempt: requested job belongs to tenant {}, but authenticated user is from tenant {}", 
+                    job.getTenantId(), authTenantId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ErrorResponse("Access denied: This job belongs to a different tenant"));
             }
 
             Map<String, Object> response = new HashMap<String, Object>() {{

@@ -99,16 +99,16 @@ export const FileUploadWithProgress: React.FC<{
               onDrop={handleDrop}
               className={`relative rounded-2xl border-2 border-dashed p-16 transition-all duration-300 ${
                 isDragging
-                  ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 scale-[1.02] shadow-2xl shadow-blue-500/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 bg-gradient-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/30 dark:to-blue-900/10'
+                  ? 'border-blue-500 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 scale-[1.02] shadow-2xl shadow-blue-500/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 bg-linear-to-br from-gray-50/50 to-blue-50/30 dark:from-gray-900/30 dark:to-blue-900/10'
               }`}
             >
               <div className="flex flex-col items-center justify-center text-center space-y-6">
                 <div
                   className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all transform ${
                     isDragging
-                      ? 'scale-110 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-500/40'
-                      : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 hover:scale-105'
+                      ? 'scale-110 bg-linear-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-500/40'
+                      : 'bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 hover:scale-105'
                   }`}
                 >
                   <Upload className={`w-10 h-10 transition-colors ${isDragging ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`} />
@@ -142,7 +142,7 @@ export const FileUploadWithProgress: React.FC<{
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-50"
+                  className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-50"
                 >
                   {selectedFile ? '📁 Choose Different File' : '📁 Browse Files'}
                 </Button>
@@ -155,7 +155,7 @@ export const FileUploadWithProgress: React.FC<{
                   onClick={handleUpload}
                   disabled={isUploading}
                   size="lg"
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30"
+                  className="flex-1 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30"
                 >
                   {isUploading ? (
                     <>
@@ -221,11 +221,11 @@ export const FileUploadWithProgress: React.FC<{
               </div>
               <div className="p-4 rounded-xl bg-green-100/50 dark:bg-green-900/30">
                 <p className="text-xs text-green-700 dark:text-green-400 uppercase tracking-wide">Processed</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{status.processedRows}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{status.totalProcessed || status.processedRows || 0}</p>
               </div>
               <div className="p-4 rounded-xl bg-red-100/50 dark:bg-red-900/30">
                 <p className="text-xs text-red-700 dark:text-red-400 uppercase tracking-wide">Failed</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{status.failedRows}</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{status.failedRows || 0}</p>
               </div>
               <div className="p-4 rounded-xl bg-blue-100/50 dark:bg-blue-900/30">
                 <p className="text-xs text-blue-700 dark:text-blue-400 uppercase tracking-wide">Progress</p>
@@ -239,7 +239,7 @@ export const FileUploadWithProgress: React.FC<{
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing Progress</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {status.processedRows + status.failedRows} / {status.totalRows} rows
+                    {(status.totalProcessed || status.processedRows || 0) + (status.failedRows || 0)} / {status.totalRows} rows
                   </p>
                 </div>
                 <Progress value={status.progress} />
@@ -252,6 +252,7 @@ export const FileUploadWithProgress: React.FC<{
                 fileId={status.jobId}
                 status={status.status}
                 totalRows={status.totalRows}
+                liveRows={status.rows}
               />
             )}
 
@@ -283,21 +284,21 @@ export const FileUploadWithProgress: React.FC<{
       )}
 
       {/* Results Section */}
-      {status?.status === 'COMPLETED' && status.results && (
+      {status?.status === 'COMPLETED' && (status.results?.length || status.rows?.length) && (
         <div className="rounded-3xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-green-200/50 dark:border-green-800/50 shadow-xl overflow-hidden">
           <div className="p-8 space-y-6">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Processing Results</h3>
             
             {/* Summary */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-800/50">
+            <div className="p-5 rounded-2xl bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-800/50">
               <p className="text-green-800 dark:text-green-300">
-                ✓ Successfully processed <span className="font-bold">{status.processedRows}</span> rows
-                {status.failedRows > 0 && ` (${status.failedRows} failed)`}
+                ✓ Successfully processed <span className="font-bold">{status.totalProcessed || status.processedRows || 0}</span> rows
+                {(status.failedRows || 0) > 0 && ` (${status.failedRows} failed)`}
               </p>
             </div>
 
             {/* Results Table Preview */}
-            {status.results.length > 0 && (
+            {(status.results?.length || status.rows?.length) && (
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
@@ -309,7 +310,7 @@ export const FileUploadWithProgress: React.FC<{
                     </tr>
                   </thead>
                   <tbody>
-                    {status.results.slice(0, 10).map((result: any, idx: number) => (
+                    {(status.results || status.rows)?.slice(0, 10).map((result: any, idx: number) => (
                       <tr key={idx} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/30">
                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{result.rowNumber}</td>
                         <td className="px-4 py-3">
@@ -320,7 +321,7 @@ export const FileUploadWithProgress: React.FC<{
                           )}
                         </td>
                         <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                          {result.result?.suggestion?.suggested_fix || result.result?.field || 'No issues'}
+                          {result.result?.suggestion?.suggested_fix || result.result?.field || result.result?.fix || 'No issues'}
                         </td>
                         <td className="px-4 py-3">
                           {result.result?.confidence && (
@@ -334,9 +335,9 @@ export const FileUploadWithProgress: React.FC<{
               </div>
             )}
 
-            {status.results.length > 10 && (
+            {((status.results?.length || 0) + (status.rows?.length || 0)) > 10 && (
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Showing 10 of {status.results.length} results
+                Showing 10 of {(status.results || status.rows)?.length} results
               </p>
             )}
 
@@ -344,7 +345,7 @@ export const FileUploadWithProgress: React.FC<{
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 onClick={() => {
-                  const json = JSON.stringify(status.results, null, 2);
+                  const json = JSON.stringify(status.results || status.rows, null, 2);
                   const blob = new Blob([json], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -353,7 +354,7 @@ export const FileUploadWithProgress: React.FC<{
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+                className="flex-1 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
               >
                 📥 Download Results
               </Button>

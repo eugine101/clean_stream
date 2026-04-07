@@ -8,6 +8,7 @@ export interface FileProcessingStatus {
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
   progress: number; // 0-100
   totalRows: number;
+  totalProcessed?: number;
   processedRows: number;
   failedRows: number;
   startTime: string;
@@ -15,6 +16,7 @@ export interface FileProcessingStatus {
   lastUpdated: string;
   errorMessage?: string;
   results?: any[];
+  rows?: any[];
 }
 
 export const useFileProcessing = () => {
@@ -39,8 +41,16 @@ export const useFileProcessing = () => {
       formData.append('tenantId', tenantId);
       formData.append('datasetId', datasetId);
 
+      // Get auth token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dp_token') : null;
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${BASE}/api/process-file/upload-and-process`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -70,7 +80,16 @@ export const useFileProcessing = () => {
   // Poll job status
   const pollJobStatus = useCallback(async (id: string) => {
     try {
-      const response = await fetch(`${BASE}/api/process-file/status/${id}`);
+      // Get auth token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('dp_token') : null;
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE}/api/process-file/status/${id}`, {
+        headers,
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch job status');

@@ -23,10 +23,17 @@ public class FileProcessingJobService {
      * Create a new processing job
      */
     public String createJob(String filename, int totalRows) {
+        return createJob(filename, totalRows, "tenant-unknown");
+    }
+
+    /**
+     * Create a new processing job with tenant ID
+     */
+    public String createJob(String filename, int totalRows, String tenantId) {
         String jobId = UUID.randomUUID().toString();
-        FileProcessingJob job = new FileProcessingJob(jobId, filename, totalRows);
+        FileProcessingJob job = new FileProcessingJob(jobId, filename, totalRows, tenantId);
         jobRegistry.put(jobId, job);
-        log.info("Created job {} for processing file: {} ({} rows)", jobId, filename, totalRows);
+        log.info("Created job {} for processing file: {} ({} rows) in tenant: {}", jobId, filename, totalRows, tenantId);
         return jobId;
     }
 
@@ -92,7 +99,20 @@ public class FileProcessingJobService {
      * Get all jobs with optional status filtering
      */
     public List<FileProcessingJob> getAllJobs(String statusFilter) {
+        return getAllJobsByTenant(statusFilter, null);
+    }
+
+    /**
+     * Get all jobs for a specific tenant with optional status filtering
+     */
+    public List<FileProcessingJob> getAllJobsByTenant(String statusFilter, String tenantId) {
         List<FileProcessingJob> jobs = new ArrayList<>(jobRegistry.values());
+        
+        // Filter by tenant if provided
+        if (tenantId != null && !tenantId.isEmpty()) {
+            jobs.removeIf(job -> !tenantId.equals(job.getTenantId()));
+        }
+        
         if (statusFilter != null && !statusFilter.isEmpty()) {
             jobs.removeIf(job -> !job.getStatus().equalsIgnoreCase(statusFilter));
         }
@@ -184,6 +204,7 @@ public class FileProcessingJobService {
     public static class FileProcessingJob {
         private String jobId;
         private String filename;
+        private String tenantId;
         private int totalRows;
         private int processedRows = 0;
         private int failedRows = 0;
@@ -198,9 +219,115 @@ public class FileProcessingJobService {
         private int lastProcessedRowNumber = 0; // Track last row number for resume functionality
 
         public FileProcessingJob(String jobId, String filename, int totalRows) {
+            this(jobId, filename, totalRows, "tenant-unknown");
+        }
+
+        public FileProcessingJob(String jobId, String filename, int totalRows, String tenantId) {
             this.jobId = jobId;
             this.filename = filename;
             this.totalRows = totalRows;
+            this.tenantId = tenantId;
+        }
+
+        // Getters and setters
+        public String getTenantId() {
+            return tenantId;
+        }
+
+        public void setTenantId(String tenantId) {
+            this.tenantId = tenantId;
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public int getTotalRows() {
+            return totalRows;
+        }
+
+        public int getProcessedRows() {
+            return processedRows;
+        }
+
+        public void setProcessedRows(int processedRows) {
+            this.processedRows = processedRows;
+        }
+
+        public int getFailedRows() {
+            return failedRows;
+        }
+
+        public void setFailedRows(int failedRows) {
+            this.failedRows = failedRows;
+        }
+
+        public int getProgress() {
+            return progress;
+        }
+
+        public void setProgress(int progress) {
+            this.progress = progress;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public void setErrorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public List<Map<String, Object>> getResults() {
+            return results;
+        }
+
+        public LocalDateTime getStartTime() {
+            return startTime;
+        }
+
+        public LocalDateTime getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(LocalDateTime endTime) {
+            this.endTime = endTime;
+        }
+
+        public LocalDateTime getLastUpdated() {
+            return lastUpdated;
+        }
+
+        public void setLastUpdated(LocalDateTime lastUpdated) {
+            this.lastUpdated = lastUpdated;
+        }
+
+        public boolean isPaused() {
+            return paused;
+        }
+
+        public void setPaused(boolean paused) {
+            this.paused = paused;
+        }
+
+        public int getLastProcessedRowNumber() {
+            return lastProcessedRowNumber;
+        }
+
+        public void setLastProcessedRowNumber(int lastProcessedRowNumber) {
+            this.lastProcessedRowNumber = lastProcessedRowNumber;
         }
     }
 }

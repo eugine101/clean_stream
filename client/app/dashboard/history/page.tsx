@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Download, RefreshCw, ChevronLeft, ChevronRight, AlertCircle, ChevronDown, Trash2, FileText, Clock, CheckCircle, XCircle, Loader2, Eye } from "lucide-react";
 import { useAppState } from "@/context/AppStateContext";
 import { ProcessingDetailsModal } from "@/components/ProcessingDetailsModal";
+import { DataCleaningDetailsModal } from "@/components/DataCleaningDetailsModal";
 import * as api from "@/lib/api";
 
 export default function Page() {
@@ -18,6 +19,8 @@ export default function Page() {
   const [openOutputMenu, setOpenOutputMenu] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [detailsFileId, setDetailsFileId] = useState<string | null>(null);
+  const [detailsFileName, setDetailsFileName] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   const { files, loading, error, refresh } = useAppState();
@@ -115,17 +118,17 @@ export default function Page() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/20">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/20">
       {/* Glassmorphic Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Upload History
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
@@ -136,7 +139,7 @@ export default function Page() {
             <Button 
               onClick={() => refresh()} 
               disabled={loading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 transition-all duration-200"
+              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 transition-all duration-200"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Refreshing..." : "Refresh"}
@@ -170,7 +173,7 @@ export default function Page() {
               }}
               className={`p-5 rounded-2xl border-2 transition-all duration-200 text-left ${
                 statusFilter === option.value
-                  ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 shadow-lg shadow-blue-500/20"
+                  ? "border-blue-500 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 shadow-lg shadow-blue-500/20"
                   : "border-gray-200/50 dark:border-gray-700/50 bg-white/70 dark:bg-gray-800/70 hover:border-blue-300 dark:hover:border-blue-700 backdrop-blur-sm"
               }`}
             >
@@ -188,7 +191,7 @@ export default function Page() {
               </div>
               <div className={`text-3xl font-bold ${
                 statusFilter === option.value
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+                  ? "bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
                   : "text-gray-900 dark:text-gray-100"
               }`}>
                 {option.count}
@@ -232,7 +235,7 @@ export default function Page() {
                     header: "File Name",
                     render: (item: any) => (
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0">
                           <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <span className="font-medium text-gray-900 dark:text-gray-100">{item.fileName}</span>
@@ -302,7 +305,7 @@ export default function Page() {
                               <ChevronDown className="w-3 h-3" />
                             </button>
                             {openOutputMenu === item.fileId && (
-                              <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-10 overflow-hidden min-w-[120px]">
+                              <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-10 overflow-hidden min-w-30">
                                 <button
                                   onClick={() => handleDownloadOutput(item.fileId, item.fileName, "JSON")}
                                   disabled={downloadingFormat === `${item.fileId}-JSON`}
@@ -327,6 +330,20 @@ export default function Page() {
                               </div>
                             )}
                           </div>
+                        )}
+                        {item.status.toUpperCase() === "COMPLETED" && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => {
+                              setDetailsFileId(item.fileId);
+                              setDetailsFileName(item.fileName);
+                            }}
+                            title="View detailed cleaning results and suggestions"
+                            className="hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                          >
+                            <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          </Button>
                         )}
                         {(item.status.toUpperCase() === "PROCESSING" || item.status.toUpperCase() === "PAUSED") && (
                           <Button
@@ -409,7 +426,7 @@ export default function Page() {
                             onClick={() => setCurrentPage(pageNum)}
                             className={`rounded-lg w-9 h-9 ${
                               currentPage === pageNum 
-                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30" 
+                                ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30" 
                                 : ""
                             }`}
                           >
@@ -445,6 +462,19 @@ export default function Page() {
           onClose={() => {
             setSelectedFileId(null);
             setSelectedFileName(null);
+          }}
+        />
+      )}
+
+      {/* Data Cleaning Details Modal */}
+      {detailsFileId && detailsFileName && (
+        <DataCleaningDetailsModal
+          fileId={detailsFileId}
+          fileName={detailsFileName}
+          isOpen={!!detailsFileId}
+          onClose={() => {
+            setDetailsFileId(null);
+            setDetailsFileName(null);
           }}
         />
       )}

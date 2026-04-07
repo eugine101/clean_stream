@@ -4,7 +4,7 @@ import { CheckCircle2, Clock, AlertCircle, Zap, Database, FileCheck, BarChart3 }
 
 interface ProcessStepsProps {
   status: string;
-  errorMessage?: string;
+  errorMessage?: string | null | undefined;
 }
 
 export function ProcessSteps({ status, errorMessage }: ProcessStepsProps) {

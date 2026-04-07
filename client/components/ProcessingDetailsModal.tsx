@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/loader";
+
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { ProcessedRowsTable } from "@/components/ProcessedRowsTable";
 
@@ -89,7 +89,7 @@ export function ProcessingDetailsModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto rounded-3xl shadow-2xl">
-        <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="sticky top-0 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
@@ -118,7 +118,10 @@ export function ProcessingDetailsModal({
 
           {isLoading && !status ? (
             <div className="flex items-center justify-center p-12">
-              <Loader />
+              <div className="animate-spin">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full" />
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 mt-4">Loading status...</p>
             </div>
           ) : status ? (
             <>
@@ -200,7 +203,7 @@ export function ProcessingDetailsModal({
               <div className="space-y-2">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full transition-all duration-500"
+                    className="bg-linear-to-r from-blue-500 to-indigo-600 h-full transition-all duration-500"
                     style={{ width: `${status.progress}%` }}
                   />
                 </div>

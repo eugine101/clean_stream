@@ -5,7 +5,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Loader from "@/components/loader";
+// import Loader from "@/components/loader";
+import { PermissionsProvider } from "@/lib/permissions-context";
+import { AuthProvider } from "@/lib/auth-context";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,8 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {loading && <Loader/>}
-        {children}
+        <AuthProvider>
+          <PermissionsProvider>
+            {/* {loading && <Loader/>} */}
+            {children}
+          </PermissionsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

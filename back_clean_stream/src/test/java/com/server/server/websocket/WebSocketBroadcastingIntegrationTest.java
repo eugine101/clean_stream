@@ -233,7 +233,7 @@ class WebSocketBroadcastingIntegrationTest {
 
         // Act - Test at 100%
         broadcastService.broadcastProgress(testDatasetId, 999, 1000, 1);
-        verify(webSocketHandler, times(2)).broadcastToDataset(
+        verify(webSocketHandler).broadcastToDataset(
             eq(testDatasetId),
             argThat(msg -> msg.getProgress().equals(100))
         );

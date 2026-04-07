@@ -4,7 +4,9 @@ import com.server.server.service.FileProcessingJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -24,6 +26,76 @@ public class FilesController {
     }
 
     /**
+     * Extract tenant ID from authentication principal (format: userId|tenantId)
+     */
+    private String getTenantId(Authentication auth) {
+        if (auth == null) return null;
+        String principal = (String) auth.getPrincipal();
+        if (principal != null && principal.contains("|")) {
+            return principal.split("\\|")[1];
+        }
+        return null;
+    }
+
+    /**
+     * Upload a file for processing via dataset API.
+     * 
+     * Request: Multipart file upload
+     * - file: The CSV or JSON file to upload
+     * - datasetId: UUID of the dataset
+     * - tenantId: Tenant identifier
+     * 
+     * Response:
+     * {
+     *   "datasetId": "550e8400-e29b-41d4-a716-446655440000",
+     *   "fileName": "test-data.csv",
+     *   "status": "uploaded",
+     *   "message": "File uploaded successfully"
+     * }
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("datasetId") String datasetId,
+            @RequestParam("tenantId") String tenantId) {
+        try {
+            // Validate inputs
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("file is required"));
+            }
+            
+            if (datasetId == null || datasetId.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("datasetId is required"));
+            }
+            
+            if (tenantId == null || tenantId.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("tenantId is required"));
+            }
+
+            String filename = file.getOriginalFilename();
+            log.info("File uploaded - filename: {}, datasetId: {}, tenantId: {}, size: {}",
+                    filename, datasetId, tenantId, file.getSize());
+
+            return ResponseEntity.ok(new HashMap<String, Object>() {{
+                put("datasetId", datasetId);
+                put("fileName", filename);
+                put("status", "uploaded");
+                put("message", "File uploaded successfully");
+                put("size", file.getSize());
+                put("timestamp", System.currentTimeMillis());
+            }});
+
+        } catch (Exception e) {
+            log.error("Error uploading file: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Error uploading file: " + e.getMessage()));
+        }
+    }
+
+    /**
      * List all uploaded files with optional status filtering.
      * 
      * Query Parameters:
@@ -33,9 +105,17 @@ public class FilesController {
      * Example: GET /api/files/list?status=PROCESSING
      */
     @GetMapping("/list")
-    public ResponseEntity<?> listFiles(@RequestParam(required = false) String status) {
+    public ResponseEntity<?> listFiles(
+            @RequestParam(required = false) String status,
+            Authentication auth) {
         try {
-            List<FileProcessingJobService.FileProcessingJob> jobs = jobService.getAllJobs(status);
+            String tenantId = getTenantId(auth);
+            if (tenantId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ErrorResponse("Tenant ID not found in authentication"));
+            }
+
+            List<FileProcessingJobService.FileProcessingJob> jobs = jobService.getAllJobsByTenant(status, tenantId);
             
             List<Map<String, Object>> response = new ArrayList<>();
             for (FileProcessingJobService.FileProcessingJob job : jobs) {
@@ -52,7 +132,7 @@ public class FilesController {
                 }});
             }
             
-            log.info("Listed {} files with status filter: {}", response.size(), status);
+            log.info("Listed {} files for tenant {} with status filter: {}", response.size(), tenantId, status);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -219,6 +299,54 @@ public class FilesController {
             log.error("Error resuming file: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Error resuming file: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Debug endpoint to verify tenant filtering and file storage
+     * Shows all files in system and what tenant you have access to
+     */
+    @GetMapping("/debug")
+    public ResponseEntity<?> debug(Authentication auth) {
+        try {
+            String tenantId = getTenantId(auth);
+            
+            // Get all jobs in the system
+            List<FileProcessingJobService.FileProcessingJob> allJobs = jobService.getAllJobs(null);
+            
+            // Get jobs for this tenant
+            List<FileProcessingJobService.FileProcessingJob> userJobs = jobService.getAllJobsByTenant(null, tenantId);
+            
+            Map<String, Object> response = new HashMap<String, Object>() {{
+                put("authenticated", auth != null && auth.isAuthenticated());
+                put("yourTenantId", tenantId);
+                put("totalJobsInSystem", allJobs.size());
+                put("jobsForYourTenant", userJobs.size());
+                put("allJobsByTenant", new HashMap<String, Object>() {{
+                    Map<String, Integer> tenantCounts = new java.util.HashMap<>();
+                    for (FileProcessingJobService.FileProcessingJob job : allJobs) {
+                        String jt = job.getTenantId() != null ? job.getTenantId() : "null";
+                        tenantCounts.put(jt, tenantCounts.getOrDefault(jt, 0) + 1);
+                    }
+                    putAll(tenantCounts);
+                }});
+                put("yourFiles", new ArrayList<Object>() {{
+                    for (FileProcessingJobService.FileProcessingJob job : userJobs) {
+                        add(new HashMap<String, Object>() {{
+                            put("jobId", job.getJobId());
+                            put("filename", job.getFilename());
+                            put("tenantId", job.getTenantId());
+                            put("status", job.getStatus());
+                        }});
+                    }
+                }});
+            }};
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error in debug endpoint: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Debug error: " + e.getMessage()));
         }
     }
 

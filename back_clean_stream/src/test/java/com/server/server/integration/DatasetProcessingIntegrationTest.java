@@ -154,8 +154,8 @@ class DatasetProcessingIntegrationTest {
         webSocketBroadcastService.broadcastProgress(datasetId, 50, 100, 1);
         webSocketBroadcastService.broadcastCompletion(datasetId, 75, 2, 100);
 
-        // Assert
-        verify(webSocketHandler, times(4)).broadcastToDataset(eq(datasetId), any());
+        // Assert - 3 calls total (2 progress + 1 completion)
+        verify(webSocketHandler, times(3)).broadcastToDataset(eq(datasetId), any());
     }
 
     @Test

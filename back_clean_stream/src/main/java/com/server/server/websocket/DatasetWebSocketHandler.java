@@ -1,6 +1,6 @@
 package com.server.server.websocket;
 
-import com.server.server.security.JwtTokenProvider;
+import com.server.server.security.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -25,10 +25,10 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
     private static final Map<String, String> SESSION_TENANT_MAP = new ConcurrentHashMap<>();
     
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtUtil jwtUtil;
     
-    public DatasetWebSocketHandler(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
+    public DatasetWebSocketHandler(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
     }
     
     @Override
@@ -43,7 +43,7 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
         String tenantId = null;
         
         if (token != null) {
-            if (!jwtTokenProvider.validateToken(token)) {
+            if (!jwtUtil.validateToken(token)) {
                 log.warn("Invalid JWT token provided for WebSocket connection - sessionId: {}", sessionId);
                 sendMessage(session, WebSocketMessage.builder()
                     .type("error")
@@ -55,7 +55,7 @@ public class DatasetWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
             
-            tenantId = jwtTokenProvider.getTenantIdFromToken(token);
+            tenantId = jwtUtil.getTenantIdFromToken(token);
             if (tenantId == null) {
                 log.warn("No tenantId found in JWT token - sessionId: {}", sessionId);
                 sendMessage(session, WebSocketMessage.builder()

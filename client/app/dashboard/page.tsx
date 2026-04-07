@@ -32,17 +32,17 @@ function DashboardClient() {
   const successRate = totalUploads > 0 ? ((successful / totalUploads) * 100).toFixed(1) : "0";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/20">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/20">
       {/* Glassmorphic Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Dashboard
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
@@ -51,7 +51,7 @@ function DashboardClient() {
               </div>
             </div>
             {processing > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 border border-orange-200 dark:border-orange-900/50">
                 <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
                 <span className="text-sm font-medium text-orange-700 dark:text-orange-300">{processing} processing</span>
               </div>
@@ -66,20 +66,20 @@ function DashboardClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="group p-6 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
                 <Upload className="w-6 h-6 text-white" />
               </div>
               <Sparkles className="w-4 h-4 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Total Uploads</p>
-            <p className="text-3xl font-bold bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <p className="text-3xl font-bold bg-linear-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               {loading ? "..." : totalUploads}
             </p>
           </div>
 
           <div className="group p-6 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
                 <FileCheck className="w-6 h-6 text-white" />
               </div>
               <div className="px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
@@ -87,33 +87,33 @@ function DashboardClient() {
               </div>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Successful</p>
-            <p className="text-3xl font-bold bg-gradient-to-br from-emerald-600 to-green-600 bg-clip-text text-transparent">
+            <p className="text-3xl font-bold bg-linear-to-br from-emerald-600 to-green-600 bg-clip-text text-transparent">
               {successful}
             </p>
           </div>
 
           <div className="group p-6 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <Zap className="w-4 h-4 text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Data Processed</p>
-            <p className="text-3xl font-bold bg-gradient-to-br from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <p className="text-3xl font-bold bg-linear-to-br from-purple-600 to-pink-600 bg-clip-text text-transparent">
               {(rowsProcessed / 1024).toFixed(1)} KB
             </p>
           </div>
 
           <div className="group p-6 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
                 <Activity className="w-6 h-6 text-white" />
               </div>
               {processing > 0 && <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">Processing</p>
-            <p className="text-3xl font-bold bg-gradient-to-br from-orange-600 to-amber-600 bg-clip-text text-transparent">
+            <p className="text-3xl font-bold bg-linear-to-br from-orange-600 to-amber-600 bg-clip-text text-transparent">
               {loading ? "..." : processing}
             </p>
           </div>
@@ -124,7 +124,7 @@ function DashboardClient() {
           <div className="rounded-3xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
             <div className="p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
@@ -132,7 +132,7 @@ function DashboardClient() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">{latestFile.filename}</p>
                 </div>
               </div>
-              <ProcessSteps status={latestFile.status} errorMessage={latestFile.errorMessage} />
+              <ProcessSteps status={latestFile.status} errorMessage={latestFile.errorMessage || undefined} />
             </div>
           </div>
         )}
@@ -142,7 +142,7 @@ function DashboardClient() {
           <div className="group rounded-3xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300">
             <div className="p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Upload Trends</h2>
@@ -154,7 +154,7 @@ function DashboardClient() {
           <div className="group rounded-3xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300">
             <div className="p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Processing Volume</h2>
@@ -169,7 +169,7 @@ function DashboardClient() {
           <div className="p-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center">
                   <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
@@ -184,7 +184,7 @@ function DashboardClient() {
                   header: "File Name",
                   render: (item) => (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0">
                         <FileCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <span className="font-medium text-gray-900 dark:text-gray-100">{item.fileName}</span>

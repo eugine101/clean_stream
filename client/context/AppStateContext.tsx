@@ -24,11 +24,16 @@ type AppState = {
 
 const AppStateContext = React.createContext<AppState | undefined>(undefined)
 
-export function AppStateProvider({ children }: { children: React.ReactNode }) {
+export function AppStateProvider({ children, tenantId: providedTenantId }: { children: React.ReactNode; tenantId?: string }) {
   const [files, setFiles] = React.useState<FileItem[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [tenantId] = React.useState<string>("tenant-001")
+  const [tenantId, setTenantId] = React.useState<string>(providedTenantId || "tenant-001")
+
+  // Update tenantId when it changes (e.g., after user logs in)
+  React.useEffect(() => {
+    setTenantId(providedTenantId || "tenant-001")
+  }, [providedTenantId])
 
   const refresh = React.useCallback(async () => {
     setLoading(true)
@@ -43,20 +48,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Refresh files when tenantId changes
   React.useEffect(() => {
     refresh()
-  }, [refresh])
+  }, [tenantId, refresh])
 
   const upload = React.useCallback(async (file: File) => {
     try {
-      const res = await api.uploadFile(file)
+      const res = await api.uploadFile(file, "dataset-001", tenantId)
       // optimistic refresh
       await refresh()
       return res
     } catch (e) {
       throw e
     }
-  }, [refresh])
+  }, [refresh, tenantId])
 
   return (
     <AppStateContext.Provider value={{ files, loading, error, tenantId, refresh, upload }}>

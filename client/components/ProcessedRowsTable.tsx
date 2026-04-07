@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Loader  from "@/components/loader";
+// import Loader  from "@/components/loader";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProcessedRowsTableProps {
   fileId: string;
   status: string;
   totalRows: number;
+  liveRows?: any[];
 }
 
 interface RowData {
@@ -41,10 +42,11 @@ export function ProcessedRowsTable({
   fileId,
   status,
   totalRows,
+  liveRows = [],
 }: ProcessedRowsTableProps) {
   const [data, setData] = useState<ProcessedRowsResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!liveRows || liveRows.length === 0);
   const [error, setError] = useState<string | null>(null);
   const pageSize = 20;
 
@@ -62,20 +64,43 @@ export function ProcessedRowsTable({
     }
   }, [fileId, currentPage, pageSize]);
 
-  // Fetch rows on mount and when page changes
+  // Use live rows if available, otherwise fetch from API
   useEffect(() => {
-    fetchRows();
-  }, [fetchRows]);
+    if (liveRows && liveRows.length > 0) {
+      // Create a response object from live rows
+      setData({
+        jobId: fileId,
+        filename: '',
+        status: status,
+        totalProcessed: liveRows.length,
+        totalRows: totalRows,
+        progress: Math.round((liveRows.length / totalRows) * 100),
+        page: 0,
+        pageSize: pageSize,
+        totalPages: 1,
+        rows: liveRows,
+      });
+      setIsLoading(false);
+    } else if (!data) {
+      // Only fetch if we don't have live rows and haven't fetched yet
+      fetchRows();
+    }
+  }, [fileId, liveRows, totalRows, pageSize, status, fetchRows, data]);
 
-  // Auto-refresh while processing
+  // Auto-refresh while processing (only if no live rows)
   useEffect(() => {
+    if (liveRows && liveRows.length > 0) {
+      // If we have live rows, don't auto-refresh via API
+      return;
+    }
+
     if (status?.toUpperCase() !== "PROCESSING" && status?.toUpperCase() !== "UPLOADING") {
       return;
     }
 
     const interval = setInterval(fetchRows, 2000); // Refresh every 2 seconds while processing
     return () => clearInterval(interval);
-  }, [status, fetchRows]);
+  }, [status, fetchRows, liveRows]);
 
   const handleNextPage = () => {
     if (data && currentPage < data.totalPages - 1) {
@@ -92,7 +117,11 @@ export function ProcessedRowsTable({
   if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader />
+        {/* <Loader /> */}
+        <div className="animate-spin">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full" />
+        </div>
+
       </div>
     );
   }

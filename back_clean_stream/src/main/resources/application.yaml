@@ -9,9 +9,14 @@ spring:
     password: 90eugine
     driver-class-name: org.postgresql.Driver
   
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baselineOnMigrate: true
+  
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -27,6 +32,17 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+# JWT Configuration
+app:
+  jwt:
+    secret: "your-super-secret-key-change-this-in-production-minimum-256-bits-long"
+    expiration-ms: 86400000  # 24 hours
+
+# CORS Configuration
+cors:
+  allowed-origins: "http://localhost:3000,http://localhost:3001"
+
+# N8N Webhook Configuration
 n8n:
   webhook:
     url: https://koyo.app.n8n.cloud/webhook/clean-data
