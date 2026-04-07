@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface WebSocketRow {
-  type: 'row' | 'progress' | 'completed' | 'error' | 'connected' | 'pong';
+  type: 'row' | 'progress' | 'completed' | 'error' | 'connected' | 'pong' | 'ping';
   datasetId?: string;
   rowIndex?: number;
   cleanedRow?: Record<string, any>;

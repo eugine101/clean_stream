@@ -132,7 +132,7 @@ function DashboardClient() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">{latestFile.filename}</p>
                 </div>
               </div>
-              <ProcessSteps status={latestFile.status} errorMessage={latestFile.errorMessage || undefined} />
+              <ProcessSteps status={latestFile.status || "UNKNOWN"} errorMessage={latestFile.errorMessage || undefined} />
             </div>
           </div>
         )}
