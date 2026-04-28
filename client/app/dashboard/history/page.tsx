@@ -23,21 +23,64 @@ export default function Page() {
   const [detailsFileName, setDetailsFileName] = useState<string | null>(null);
   const itemsPerPage = 10;
 
-  const { files, loading, error, refresh } = useAppState();
+  const { files, loading, error, refresh, tenantId } = useAppState();
 
-  const allUploads = files.map((f: any, idx: number) => ({
-    id: idx,
-    fileId: f.fileId || f.id,
-    fileName: f.filename || "-",
-    uploadDate: f.uploadedAt ? new Date(f.uploadedAt).toLocaleString() : "-",
-    status: f.status || "-",
-    rows: f.fileSize ? f.fileSize.toLocaleString() : "-",
-    size: f.fileSize ? `${(f.fileSize / 1024).toFixed(1)} KB` : "-"
-  }));
+  const allUploads = files.map((f: any, idx: number) => {
+    // Parse rowData if it's a string (cleaning results format)
+    let rowData: any = {};
+    if (typeof f.rowData === 'string') {
+      try {
+        rowData = JSON.parse(f.rowData);
+      } catch (e) {
+        rowData = {};
+      }
+    } else {
+      rowData = f.rowData || {};
+    }
+
+    // Parse aiSuggestion if it's a string
+    let aiSuggestion: any = {};
+    if (typeof f.aiSuggestion === 'string') {
+      try {
+        aiSuggestion = JSON.parse(f.aiSuggestion);
+      } catch (e) {
+        aiSuggestion = {};
+      }
+    } else {
+      aiSuggestion = f.aiSuggestion || {};
+    }
+
+    // Extract filename from rowData or use file metadata
+    const fileName = f.filename || rowData['Product Name'] || rowData['Name'] || `Record ${f.id || idx}`;
+    const uploadDate = f.uploadedAt || f.createdAt || new Date().toISOString();
+
+    return {
+      id: idx,
+      fileId: f.fileId || f.id || f.datasetId,
+      fileName: fileName,
+      uploadDate: uploadDate ? new Date(uploadDate).toLocaleString() : "-",
+      status: f.status || "-",
+      rows: f.fileSize ? f.fileSize.toLocaleString() : "1",
+      size: f.fileSize ? `${(f.fileSize / 1024).toFixed(1)} KB` : "N/A",
+      confidence: f.confidence ? `${(f.confidence * 100).toFixed(1)}%` : "N/A",
+      datasetId: f.datasetId || "-",
+      rowData,
+      aiSuggestion
+    };
+  });
 
   const filteredUploads = allUploads.filter((upload) => {
     const matchesSearch = upload.fileName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || upload.status.toUpperCase() === statusFilter.toUpperCase();
+    
+    let matchesStatus = false;
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (statusFilter.toUpperCase() === "COMPLETED") {
+      matchesStatus = upload.status.toUpperCase() === "COMPLETED" || upload.status.toUpperCase() === "PROCESSED";
+    } else {
+      matchesStatus = upload.status.toUpperCase() === statusFilter.toUpperCase();
+    }
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -105,14 +148,14 @@ export default function Page() {
 
   const getStatusIcon = (status: string) => {
     const upperStatus = status.toUpperCase();
-    if (upperStatus === "COMPLETED") return <CheckCircle className="w-4 h-4" />;
+    if (upperStatus === "COMPLETED" || upperStatus === "PROCESSED") return <CheckCircle className="w-4 h-4" />;
     if (upperStatus === "FAILED") return <XCircle className="w-4 h-4" />;
     return <Loader2 className="w-4 h-4 animate-spin" />;
   };
 
   const statusOptions = [
     { value: "all", label: "All Files", count: allUploads.length },
-    { value: "Completed", label: "Completed", count: allUploads.filter(u => u.status.toUpperCase() === "COMPLETED").length },
+    { value: "Completed", label: "Completed", count: allUploads.filter(u => u.status.toUpperCase() === "COMPLETED" || u.status.toUpperCase() === "PROCESSED").length },
     { value: "Processing", label: "Processing", count: allUploads.filter(u => u.status.toUpperCase() === "PROCESSING").length },
     { value: "Failed", label: "Failed", count: allUploads.filter(u => u.status.toUpperCase() === "FAILED").length },
   ];
@@ -121,7 +164,7 @@ export default function Page() {
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/20">
       {/* Glassmorphic Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-8xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -148,7 +191,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-8xl mx-auto px-6 py-8 space-y-6">
         {/* Error Alert */}
         {error && (
           <div className="rounded-2xl bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm border border-red-200/50 dark:border-red-800/50 p-5 flex items-start gap-4 shadow-sm">
@@ -255,18 +298,46 @@ export default function Page() {
                   {
                     key: "status",
                     header: "Status",
-                    render: (item: any) => (
-                      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                        item.status.toUpperCase() === "COMPLETED"
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : item.status.toUpperCase() === "FAILED"
-                          ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      }`}>
-                        {getStatusIcon(item.status)}
-                        {item.status}
-                      </span>
-                    ),
+                    render: (item: any) => {
+                      const upperStatus = item.status.toUpperCase();
+                      const isCompleted = upperStatus === "COMPLETED" || upperStatus === "PROCESSED";
+                      const isFailed = upperStatus === "FAILED";
+                      
+                      return (
+                        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                          isCompleted
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : isFailed
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        }`}>
+                          {getStatusIcon(item.status)}
+                          {isCompleted ? "Completed" : item.status}
+                        </span>
+                      );
+                    },
+                  },
+                  { 
+                    key: "confidence", 
+                    header: "Confidence",
+                    render: (item: any) => {
+                      const conf = parseFloat(item.confidence);
+                      const isValid = !isNaN(conf);
+                      const confValue = isValid ? conf : 0;
+                      return (
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-linear-to-r from-blue-500 to-indigo-600 transition-all"
+                              style={{ width: `${Math.min(confValue, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                            {isValid ? `${confValue.toFixed(0)}%` : "N/A"}
+                          </span>
+                        </div>
+                      );
+                    }
                   },
                   { 
                     key: "rows", 
@@ -331,7 +402,7 @@ export default function Page() {
                             )}
                           </div>
                         )}
-                        {item.status.toUpperCase() === "COMPLETED" && (
+                        {(item.status.toUpperCase() === "COMPLETED" || item.status.toUpperCase() === "PROCESSED") && (
                           <Button
                             variant="ghost"
                             size="icon-sm"

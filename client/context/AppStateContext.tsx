@@ -3,7 +3,8 @@
 import React from "react"
 import * as api from "@/lib/api"
 
-type FileItem = {
+type CleaningResultItem = {
+  id?: number
   fileId?: string
   filename?: string
   status?: string
@@ -11,10 +12,17 @@ type FileItem = {
   processedAt?: string | null
   fileSize?: number
   errorMessage?: string | null
+  // Cleaning result specific fields
+  tenantId?: string
+  datasetId?: string
+  rowData?: string
+  aiSuggestion?: string
+  confidence?: number
+  createdAt?: string
 }
 
 type AppState = {
-  files: FileItem[]
+  files: CleaningResultItem[]
   loading: boolean
   error?: string | null
   tenantId: string
@@ -25,7 +33,7 @@ type AppState = {
 const AppStateContext = React.createContext<AppState | undefined>(undefined)
 
 export function AppStateProvider({ children, tenantId: providedTenantId }: { children: React.ReactNode; tenantId?: string }) {
-  const [files, setFiles] = React.useState<FileItem[]>([])
+  const [files, setFiles] = React.useState<CleaningResultItem[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [tenantId, setTenantId] = React.useState<string>(providedTenantId || "tenant-001")
@@ -39,10 +47,25 @@ export function AppStateProvider({ children, tenantId: providedTenantId }: { chi
     setLoading(true)
     setError(null)
     try {
-      const data = await api.listFiles()
-      setFiles(data || [])
+      // First try to fetch cleaning results (tenant-specific)
+      const cleaningData = await api.getCleaningResults(0, 100)
+      if (cleaningData && cleaningData.content) {
+        setFiles(cleaningData.content || [])
+      } else {
+        // Fallback to listFiles if cleaning results endpoint is not available
+        const fileData = await api.listFiles()
+        setFiles(fileData || [])
+      }
     } catch (e: any) {
-      setError(e?.message || "Failed to load files")
+      console.error("Error fetching cleaning results:", e)
+      // Fallback to listFiles on error
+      try {
+        const fileData = await api.listFiles()
+        setFiles(fileData || [])
+      } catch (fallbackError: any) {
+        setError(fallbackError?.message || "Failed to load files")
+        setFiles([])
+      }
     } finally {
       setLoading(false)
     }
@@ -77,4 +100,4 @@ export function useAppState() {
   return ctx
 }
 
-export type { FileItem }
+export type { CleaningResultItem as FileItem }

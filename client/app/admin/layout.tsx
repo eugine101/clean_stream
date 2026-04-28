@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppStateProvider } from '@/context/AppStateContext';
+import AppSidebar from '@/components/app-sidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -51,5 +54,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  return <>{children}</>;
+  return(
+     <SidebarProvider>
+      <AppSidebar />
+      <AppStateProvider tenantId={user?.currentOrg?.id}>
+        <main className="w-full">
+          <div className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-40">
+            <SidebarTrigger />
+          </div>
+          <div className="w-full">{children}</div>
+        </main>
+      </AppStateProvider>
+    </SidebarProvider>
+  );
 }

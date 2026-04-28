@@ -766,3 +766,663 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ---
 
 **Last Updated**: February 24, 2026
+
+# Multi-Tier Admin System & Team Management Guide
+
+## Overview
+
+This document outlines the complete multi-tier admin hierarchy and team management features that have been implemented in the Clean Stream platform.
+
+---
+
+## System Architecture
+
+### User Role Hierarchy
+
+```
+┌─────────────────────────────────────────────┐
+│     Platform Admin (SaaS Owner)           │
+│  - System-wide access & configuration     │
+│  - Manages all tenants                    │
+│  - Views analytics across platform        │
+└─────────────────────────────────────────────┘
+             ↓ (Creates)
+┌─────────────────────────────────────────────┐
+│        Tenant Owner (Workspace Admin)      │
+│  - Full control within their tenant        │
+│  - Manages team members & roles            │
+│  - Creates user groups                     │
+│  - Configures workspace settings           │
+└─────────────────────────────────────────────┘
+             ↓ (Invites)
+┌─────────────────────────────────────────────┐
+│    Team Members (Editor / Viewer)         │
+│  - Limited access as defined by role       │
+│  - Works within assigned groups            │
+│  - Collaborates on files & groups          │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## Features by Role
+
+### 1. Platform Admin (`PLATFORM_ADMIN`)
+
+**Location**: `/admin` dashboard
+
+**Capabilities**:
+- View all tenants in the system
+- Monitor system-wide statistics:
+  - Total tenants
+  - Total active users
+  - Total storage consumption
+  - System health status
+- Manage tenant lifecycle:
+  - Toggle tenant active/paused status
+  - Edit tenant information
+  - Delete tenants
+  - Search and filter tenants
+- View subscription plans per tenant
+- Monitor last activity timestamps
+- Access system configuration
+
+**Pages**:
+- `/admin` - Main dashboard with tenant management
+
+---
+
+### 2. Tenant Owner (`OWNER` role)
+
+**Location**: `/dashboard` section
+
+**Capabilities**:
+- **Team Management** (`/dashboard/team-members`):
+  - Invite new members via email
+  - Assign roles to members (admin, editor, viewer)
+  - View member status (active, pending, inactive)
+  - Edit existing member roles
+  - Remove members from workspace
+  - Track member join dates
+
+- **User Groups** (`/dashboard/user-groups`):
+  - Create user groups for organizing team
+  - Delete groups (if empty)
+  - Edit group details
+  - View member count per group
+  - Manage group memberships (add/remove members)
+
+- **Permissions** (`/dashboard/permissions`):
+  - Configure role-based access control
+  - Define permissions per role:
+    - File operations (upload, download, delete)
+    - Group management
+    - Member management
+    - Settings access
+  - Reset permissions to defaults
+  - View permission matrix
+
+- **Settings** (`/dashboard/settings`):
+  - Account information (name, email, profile picture)
+  - Workspace details (name, slug, plan)
+  - Notification preferences
+  - API keys management
+  - Platform admin settings (if applicable)
+
+**Pages**:
+- `/dashboard/team-members` - Manage workspace members
+- `/dashboard/user-groups` - Create and manage groups
+- `/dashboard/permissions` - Configure role permissions
+- `/dashboard/settings` - Workspace and account settings
+
+---
+
+### 3. Team Members (`EDITOR` / `VIEWER` roles)
+
+**Location**: Limited `/dashboard` access
+
+**Capabilities**:
+
+**Editor**:
+- Upload files to workspace
+- Process/clean data
+- View workspace data
+- Download processed files
+- Create/edit groups (optional, based on permissions)
+- View team member list (read-only)
+- Access settings (read-only)
+
+**Viewer**:
+- Download processed files
+- View reports
+- Access settings (read-only)
+- Limited data visibility
+
+**Pages** (Limited Access):
+- `/dashboard` - File uploads and history
+- `/dashboard/settings` - View settings only
+
+---
+
+## Role Permissions Matrix
+
+| Permission | Admin | Editor | Viewer |
+|-----------|-------|--------|--------|
+| **Files** |
+| Upload Files | ✅ | ✅ | ❌ |
+| Process Files | ✅ | ✅ | ❌ |
+| Download Files | ✅ | ✅ | ✅ |
+| Delete Files | ✅ | ❌ | ❌ |
+| **Groups** |
+| Create Groups | ✅ | ✅ | ❌ |
+| Edit Groups | ✅ | ✅ | ❌ |
+| Delete Groups | ✅ | ❌ | ❌ |
+| Manage Group Members | ✅ | ✅ | ❌ |
+| **Members** |
+| Invite Members | ✅ | ❌ | ❌ |
+| Edit Members | ✅ | ❌ | ❌ |
+| Remove Members | ✅ | ❌ | ❌ |
+| **Settings** |
+| View Settings | ✅ | ✅ | ✅ |
+| Manage Settings | ✅ | ❌ | ❌ |
+| Manage Billing | ✅ | ❌ | ❌ |
+
+---
+
+## Frontend Pages & Components
+
+### Navigation Structure
+
+```
+App
+├── Auth Routes
+│   ├── /auth/login
+│   ├── /auth/signup
+│   └── /auth/forgot-password
+│
+├── Dashboard (Tenant User)
+│   ├── /dashboard (Home)
+│   ├── /dashboard/upload
+│   ├── /dashboard/history
+│   ├── /dashboard/team-members ← New
+│   ├── /dashboard/user-groups ← New
+│   ├── /dashboard/permissions
+│   └── /dashboard/settings
+│
+└── Admin (Platform Admin Only)
+    ├── /admin (Main dashboard) ← New
+    └── /admin/layout (Protected layout)
+```
+
+### Key Pages
+
+#### 1. Team Members (`/dashboard/team-members`)
+- **Components**:
+  - Member table with search
+  - Invite dialog
+  - Edit member dialog
+  - Role selection dropdown
+  - Status badges
+  - Statistics cards
+- **Features**:
+  - Invite new members
+  - Manage existing members
+  - Change member roles
+  - Remove members
+  - Filter by status/role
+
+#### 2. User Groups (`/dashboard/user-groups`)
+- **Components**:
+  - Groups grid/list view
+  - Create group dialog
+  - Group cards with member count
+  - Search functionality
+  - Edit/Delete buttons
+- **Features**:
+  - Create new groups
+  - Edit group details
+  - Delete groups
+  - Add/remove members
+  - View group statistics
+
+#### 3. Permissions (`/dashboard/permissions`)
+- **Components**:
+  - Permission matrix
+  - Role selector tabs
+  - Checkbox list per category
+  - Permission percentage indicator
+- **Features**:
+  - View permission matrix by role
+  - Toggle permissions on/off
+  - Reset to defaults
+  - View permission hierarchy
+
+#### 4. Admin Dashboard (`/admin`)
+- **Components**:
+  - Statistics cards (tenants, users, storage)
+  - Tenant table with search/filter
+  - Tenant action buttons
+  - System info panel
+- **Features**:
+  - View all tenants
+  - Monitor system metrics
+  - Pause/resume tenants
+  - Edit/delete tenants
+  - Filter by status
+
+---
+
+## Implementation Files
+
+### Frontend
+```
+client/
+├── app/
+│   ├── admin/
+│   │   ├── layout.tsx          # Admin layout with auth check
+│   │   └── page.tsx            # Admin dashboard
+│   └── dashboard/
+│       ├── team-members/
+│       │   └── page.tsx        # Member management
+│       ├── user-groups/
+│       │   └── page.tsx        # Group management
+│       ├── permissions/
+│       │   └── page.tsx        # Permission config
+│       └── settings/
+│           └── page.tsx        # Settings with admin tab
+│
+├── components/
+│   ├── app-sidebar.tsx         # Updated with admin link
+│   └── ui/                     # Existing UI components
+│
+└── lib/
+    ├── auth-context.tsx        # Auth state & logout
+    └── api.ts                  # API integration points
+```
+
+### Backend Integration Points
+
+The following backend endpoints need to be implemented:
+
+**User Groups API**:
+```
+POST   /api/user-groups              # Create group
+GET    /api/user-groups              # List groups
+PUT    /api/user-groups/{id}         # Update group
+DELETE /api/user-groups/{id}         # Delete group
+POST   /api/user-groups/{id}/members # Manage members
+```
+
+**Team Members API**:
+```
+POST   /api/members/invite           # Invite member
+GET    /api/members                  # List members
+PUT    /api/members/{id}             # Update member role
+DELETE /api/members/{id}             # Remove member
+```
+
+**Platform Admin API**:
+```
+GET    /api/admin/tenants            # List all tenants
+GET    /api/admin/stats              # System statistics
+PUT    /api/admin/tenants/{id}/status # Change status
+DELETE /api/admin/tenants/{id}       # Delete tenant
+```
+
+---
+
+## Authentication & Authorization
+
+### Frontend Checks
+```typescript
+// Platform Admin check
+const isPlatformAdmin = user?.roles?.some((r: any) => r.name === 'PLATFORM_ADMIN');
+
+// Tenant Owner check
+const isOwner = user?.orgRole?.slug === 'owner' || 
+                user?.orgRole?.slug === 'admin';
+
+// Role-based checks
+const canInviteMembers = user?.roles?.some((r: any) => 
+  ['admin', 'editor'].includes(r.name)
+);
+```
+
+### JWT Token Structure
+```json
+{
+  "sub": "userId",
+  "tenantId": "c651e93b-1f27-48b4-8092-13744689052a",
+  "roles": [
+    { "name": "OWNER", "id": "role_1" }
+  ],
+  "orgRole": {
+    "slug": "owner",
+    "name": "Owner"
+  }
+}
+```
+
+---
+
+## Task Workflow
+
+### Creating a New Team Member
+1. Tenant Owner navigates to `/dashboard/team-members`
+2. Clicks "Invite Member"
+3. Enters email and selects role (admin/editor/viewer)
+4. System sends invitation email
+5. User status shows as "Pending"
+6. Once accepted, status changes to "Active"
+7. Owner can later edit role or remove member
+
+### Creating a User Group
+1. Tenant Owner navigates to `/dashboard/user-groups`
+2. Clicks "Create Group"
+3. Enters group name and description
+4. Group is created with 0 members
+5. Owner clicks "Manage Members" to add people
+6. Members are added from available team members
+
+### Managing Permissions
+1. Tenant Owner navigates to `/dashboard/permissions`
+2. Selects a role (Admin/Editor/Viewer)
+3. Checks/unchecks permissions per category
+4. Permissions update in real-time
+5. Can reset to defaults if needed
+
+### Platform Admin Monitoring
+1. Platform Admin navigates to `/admin`
+2. Views system-wide statistics
+3. Can see all tenants and their usage
+4. Can pause/resume specific tenants
+5. Can delete tenants if needed
+6. Monitors storage and user counts
+
+---
+
+## Sidebar Navigation
+
+The sidebar automatically updates based on user role:
+
+**All Users**:
+- Dashboard
+- Uploads
+- History
+
+**Team Owners + Members**:
+- Team Members
+- User Groups
+- Permissions
+- Settings
+
+**Platform Admins** (Additional):
+- Admin Panel (links to `/admin`)
+
+---
+
+## Future Enhancements
+
+1. **Email Integration**:
+   - Send invitation emails to new members
+   - Verification links
+   - Onboarding emails
+
+2. **Batch Operations**:
+   - Bulk invite members
+   - Bulk assign to groups
+   - Bulk permission changes
+
+3. **Audit Logs**:
+   - Track all member changes
+   - Log permission modifications
+   - Monitor admin actions
+
+4. **Advanced Permissions**:
+   - Custom permission templates
+   - Inherited permissions
+   - Time-based access
+
+5. **SSO Integration**:
+   - Google/Microsoft login
+   - LDAP for enterprises
+   - Okta integration
+
+---
+
+## Troubleshooting
+
+### Admin Panel Not Showing
+- Verify user has `PLATFORM_ADMIN` role in database
+- Check JWT token contains correct role
+- Clear browser cache and re-login
+
+### Permission Changes Not Applying
+- Ensure backend is validating permissions on each request
+- Check JWT token is refreshed after permission change
+- Verify frontend is calling correct API endpoint
+
+### Team Member Invite Not Sending
+- Implement email service in backend
+- Check SMTP/Email provider configuration
+- Log invitation attempts for debugging
+
+---
+
+## Support & Documentation
+
+For more information:
+- See `/README.md` for project setup
+- Check `BACKEND_TESTS.md` for API testing
+- Review current backend controller implementations for patterns
+
+---
+
+**Status**: ✅ Frontend Implementation Complete
+**Next**: Backend API Integration Required
+
+# History Fetching Fix - Implementation Guide
+
+## What Was Created
+
+### 1. **Java Backend** (Spring Boot)
+- `CleaningResult.java` - JPA Entity mapped to `cleaning_results` PostgreSQL table
+- `CleaningResultRepository.java` - JPA Repository with tenant-filtered queries
+- `CleaningResultService.java` - Business logic for fetching and filtering results
+- `CleaningResultController.java` - REST API endpoints with tenant isolation
+
+### 2. **Frontend API Layer** (TypeScript)
+- `api-cleaning-results.ts` - New API functions for fetching cleaning history
+
+---
+
+## Integration Steps
+
+### Step 1: Update Database Schema (PostgreSQL)
+The `cleaning_results` table should already exist from the Python backend, but ensure indexes are created:
+
+```sql
+-- Verify table exists (created by SQLAlchemy from AI_Engine)
+SELECT * FROM information_schema.tables 
+WHERE table_schema = 'public' AND table_name = 'cleaning_results';
+
+-- Verify indexes exist
+CREATE INDEX IF NOT EXISTS idx_cleaning_results_tenant_dataset 
+  ON cleaning_results(tenant_id, dataset_id);
+CREATE INDEX IF NOT EXISTS idx_cleaning_results_tenant 
+  ON cleaning_results(tenant_id);
+```
+
+### Step 2: Update Spring Boot Configuration
+Ensure `application.yaml` includes PostgreSQL datasource (should already be configured):
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cleanstream_db
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Don't auto-create (schema managed by Python)
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+```
+
+### Step 3: Rebuild Java Backend
+```bash
+cd back_clean_stream
+./mvnw clean package
+```
+
+This compiles the new entities and repositories into the application.
+
+### Step 4: Update Frontend API Calls
+**OLD (in-memory cached data):**
+```typescript
+const { files } = useAppState()  // Only has job metadata
+```
+
+**NEW (database-backed history):**
+```typescript
+import { getCleaningResults, getDatasetCleaningResults } from '@/lib/api-cleaning-results'
+
+const data = await getCleaningResults(0, 20, { status: 'processed' })
+// Returns: { page, pageSize, totalElements, totalPages, content: [...] }
+```
+
+### Step 5: Test the Flow
+
+1. **Upload and process a file** → Data saved to `cleaning_results` table
+2. **Login as tenant** → JWT token contains tenantId
+3. **Call GET `/api/cleaning-results`** → Returns only this tenant's results
+4. **Verify tenant isolation** → Login as different tenant → Different results
+
+---
+
+## API Endpoints Created
+
+### Get All Cleaning Results
+```
+GET /api/cleaning-results?page=0&pageSize=20&status=processed&startDate=2025-01-01&endDate=2025-01-31
+Authorization: Bearer <jwt-token>
+
+Response:
+{
+  "page": 0,
+  "pageSize": 20,
+  "totalElements": 150,
+  "totalPages": 8,
+  "content": [
+    {
+      "id": 1,
+      "tenantId": "tenant-123",
+      "datasetId": "dataset-abc",
+      "rowData": "{...json...}",
+      "aiSuggestion": "{...json...}",
+      "confidence": 0.95,
+      "status": "processed",
+      "createdAt": "2025-01-15T10:30:00"
+    },
+    ...
+  ]
+}
+```
+
+### Get Dataset-Specific Results
+```
+GET /api/cleaning-results/dataset/{datasetId}?page=0&pageSize=20
+```
+
+### Get Results by Status
+```
+GET /api/cleaning-results/status/processed?page=0&pageSize=20
+GET /api/cleaning-results/status/failed?page=0&pageSize=20
+GET /api/cleaning-results/status/pending?page=0&pageSize=20
+```
+
+### Get Statistics
+```
+GET /api/cleaning-results/stats
+
+Response:
+{
+  "tenantId": "tenant-123",
+  "total": 150,
+  "processed": 145,
+  "failed": 3,
+  "pending": 2,
+  "successRate": 96.67
+}
+```
+
+---
+
+## Tenant Isolation Flow
+
+```
+Client (logged in as tenant-123)
+       ↓
+JWT Token contains: userId|tenant-123
+       ↓
+GET /api/cleaning-results (with JWT)
+       ↓
+CleaningResultController.getTenantId(auth)
+       ↓
+Extracts "tenant-123" from JWT principal
+       ↓
+CleaningResultService.getCleaningResults(tenantId="tenant-123", ...)
+       ↓
+CleaningResultRepository.findByTenantWithFilters(tenantId="tenant-123", ...)
+       ↓
+SQL: SELECT * FROM cleaning_results 
+     WHERE tenant_id = 'tenant-123' AND ...
+       ↓
+Only returns results for tenant-123 ✓
+```
+
+---
+
+## Key Improvements
+
+| Issue | Before | After |
+|-------|--------|-------|
+| **Data Storage** | In-memory (lost on restart) | PostgreSQL (persistent) |
+| **Tenant Isolation** | No filtering in query | WHERE tenant_id = ? |
+| **History API** | Doesn't exist | ✓ Full REST API |
+| **Pagination** | Not supported | ✓ Page + PageSize |
+| **Filtering** | Only status | ✓ Status, Date, Dataset |
+| **Statistics** | Not available | ✓ Success rate, counts |
+
+---
+
+## Troubleshooting
+
+### "Column tenant_id not found"
+The `cleaning_results` table exists but might be missing the `tenant_id` column. Verify:
+```sql
+SELECT column_name FROM information_schema.columns 
+WHERE table_name = 'cleaning_results' AND column_name = 'tenant_id';
+```
+
+### "No results returned"
+1. Verify data exists: `SELECT COUNT(*) FROM cleaning_results WHERE tenant_id = 'your-tenant-id'`
+2. Check JWT contains valid tenantId: Use `/api/files/debug` endpoint
+3. Verify date filters aren't too restrictive
+
+### "401 Unauthorized"
+JWT token invalid or missing tenantId. Check:
+1. Token sent in `Authorization: Bearer <token>` header
+2. Token contains `userId|tenantId` format in principal
+
+---
+
+## Next Steps
+
+1. Rebuild Spring Boot backend
+2. Test with Postman/curl to verify endpoints work
+3. Update frontend history page to use new API
+4. Add frontend components for filtering/pagination
+5. Monitor database query performance with complex filters

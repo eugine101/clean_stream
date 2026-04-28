@@ -64,7 +64,7 @@ export default function LoginPage() {
   // text-muted: #8bbfb0
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#1b5e5e' }}>
+    <div className="min-h-screen flex" style={{ background: 'white' }}>
       {/* Left panel */}
       <div className="hidden lg:flex w-1/2 flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10"
@@ -86,7 +86,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3 mb-16">
             <CleanStreamMark size={40} />
             <div>
-              <p className="font-bold uppercase tracking-widest text-sm" style={{ color: '#c8f5a0', letterSpacing: '0.18em' }}>
+              <p className="font-bold uppercase tracking-widest text-sm" style={{ color: '#7ed957', letterSpacing: '0.18em' }}>
                 Clean Stream
               </p>
               <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#7ed957', letterSpacing: '0.1em' }}>
@@ -95,7 +95,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h1 className="text-5xl font-bold leading-tight mb-6" style={{ color: '#c8f5a0' }}>
+          <h1 className="text-5xl font-bold leading-tight mb-6" style={{ color: '#7ed957' }}>
             Clean data.<br />
             <span style={{ color: '#7ed957' }}>Clear decisions.</span>
           </h1>
